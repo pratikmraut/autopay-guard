@@ -1,4 +1,4 @@
-FROM node:22.19.0-alpine AS dependencies
+FROM node:26.7.0-alpine AS dependencies
 
 ENV PNPM_HOME=/pnpm
 ENV PATH="${PNPM_HOME}:${PATH}"
@@ -15,7 +15,7 @@ COPY apps/web apps/web
 COPY packages/contracts packages/contracts
 RUN pnpm --dir apps/web build
 
-FROM node:22.19.0-alpine AS runtime
+FROM node:26.7.0-alpine AS runtime
 
 ENV NODE_ENV=production
 ENV PORT=3000
