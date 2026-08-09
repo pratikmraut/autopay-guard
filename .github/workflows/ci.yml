@@ -33,10 +33,115 @@ jobs:
           cache-dependency-path: services/api/pom.xml
 
       - name: Verify API
+        id: maven_verify
         working-directory: services/api
         run: |
           chmod +x mvnw
           ./mvnw --batch-mode --no-transfer-progress verify
+
+      - name: Annotate failing Maven tests
+        if: ${{ failure() && steps.maven_verify.outcome == 'failure' }}
+        continue-on-error: true
+        working-directory: services/api
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from itertools import chain, islice
+          from pathlib import Path
+          import re
+          import xml.etree.ElementTree as ET
+
+          REPORT_DIRS = (
+              Path("target/surefire-reports"),
+              Path("target/failsafe-reports"),
+          )
+          MAX_REPORTS = 200
+          MAX_REPORT_BYTES = 2 * 1024 * 1024
+          MAX_ANNOTATIONS = 50
+
+          class_cleaner = re.compile(r"[^A-Za-z0-9_.$]")
+          method_prefix = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
+
+          def local_name(tag):
+              return tag.rsplit("}", 1)[-1]
+
+          def safe_class_name(value):
+              cleaned = class_cleaner.sub("_", value or "")[:160]
+              return cleaned or "unknown_class"
+
+          report_stream = chain.from_iterable(
+              directory.glob("TEST-*.xml") for directory in REPORT_DIRS
+          )
+          reports = list(islice(report_stream, MAX_REPORTS + 1))
+          report_limit_hit = len(reports) > MAX_REPORTS
+          reports = reports[:MAX_REPORTS]
+
+          failures = []
+          skipped_report = False
+
+          for report in reports:
+              try:
+                  with report.open("rb") as handle:
+                      raw = handle.read(MAX_REPORT_BYTES + 1)
+              except OSError:
+                  skipped_report = True
+                  continue
+
+              upper = raw.upper()
+              if (
+                  len(raw) > MAX_REPORT_BYTES
+                  or b"<!DOCTYPE" in upper
+                  or b"<!ENTITY" in upper
+              ):
+                  skipped_report = True
+                  continue
+
+              try:
+                  root = ET.fromstring(raw)
+              except ET.ParseError:
+                  skipped_report = True
+                  continue
+
+              for testcase in root.iter():
+                  if local_name(testcase.tag) != "testcase":
+                      continue
+
+                  failed = any(
+                      local_name(child.tag) in {"failure", "error"}
+                      for child in testcase
+                  )
+                  if not failed:
+                      continue
+
+                  class_name = safe_class_name(testcase.get("classname"))
+                  match = method_prefix.match(testcase.get("name") or "")
+                  method_name = match.group(0)[:120] if match else "unknown_test"
+                  failures.append(f"{class_name}#{method_name}")
+
+          unique_failures = list(dict.fromkeys(failures))
+
+          for failure in unique_failures[:MAX_ANNOTATIONS]:
+              print(f"::error title=Maven test failure::{failure}")
+
+          omitted = len(unique_failures) - MAX_ANNOTATIONS
+          if omitted > 0:
+              print(
+                  "::notice title=Maven test annotations::"
+                  f"{omitted} additional failing tests omitted"
+              )
+
+          if not unique_failures:
+              print(
+                  "::notice title=Maven verify failed::"
+                  "No failing Surefire or Failsafe testcase entries were available"
+              )
+
+          if skipped_report or report_limit_hit:
+              print(
+                  "::notice title=Maven test annotations::"
+                  "Some report files were omitted by parsing safety limits"
+              )
+          PY
 
   frontend:
     name: Frontend quality and build
