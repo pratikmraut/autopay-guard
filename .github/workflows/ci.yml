@@ -33,9 +33,10 @@ jobs:
           cache-dependency-path: services/api/pom.xml
 
       - name: Verify API
+        working-directory: services/api
         run: |
-          chmod +x services/api/mvnw
-          services/api/mvnw --batch-mode --no-transfer-progress verify
+          chmod +x mvnw
+          ./mvnw --batch-mode --no-transfer-progress verify
 
   frontend:
     name: Frontend quality and build

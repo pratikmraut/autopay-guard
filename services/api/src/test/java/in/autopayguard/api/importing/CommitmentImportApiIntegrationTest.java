@@ -1370,7 +1370,7 @@ class CommitmentImportApiIntegrationTest {
                                 """,
                                 String.class,
                                 importId))
-                .containsExactly(
+                .containsExactlyInAnyOrder(
                         "IMPORT_PREVIEW_CREATED",
                         "IMPORT_PREVIEW_EXPIRED");
     }

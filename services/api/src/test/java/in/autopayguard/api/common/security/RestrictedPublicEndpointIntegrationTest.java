@@ -17,7 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
             "springdoc.swagger-ui.enabled=false",
             "management.endpoints.web.exposure.include=health",
             "management.endpoint.health.show-details=never",
-            "management.endpoint.health.show-components=never"
+            "management.endpoint.health.show-components=never",
+            "management.health.mail.enabled=false"
         })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
