@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:autopay_guard;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+app:
+  imports:
+    fingerprint-key: "0000000000000000000000000000000000000000000000000000000000000000"
+  identity:
+    auto-provision: true
+    require-verified-email: false
+  notifications:
+    generator-cron: "-"
+    worker-cron: "-"
+    reconciliation-cron: "-"
+    email:
+      mode: DISABLED
+  security:
+    issuer-uri: https://issuer.test.example/realms/autopay-guard
+    jwk-set-uri: https://issuer.test.example/unused-jwks
+    audience: autopay-guard-api
+
+logging:
+  structured:
+    format:
+      console:
+  level:
+    root: WARN

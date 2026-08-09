@@ -1,0 +1,88 @@
+{
+  "fixtureVersion": 1,
+  "preferences": {
+    "enabled": true,
+    "inAppEnabled": true,
+    "emailEnabled": true,
+    "timezone": "Asia/Kolkata",
+    "quietHoursEnabled": true,
+    "quietStart": "22:00",
+    "quietEnd": "07:00"
+  },
+  "householdRules": {
+    "mode": "CUSTOM",
+    "rules": [
+      {
+        "channel": "IN_APP",
+        "offsetDays": 7,
+        "localSendTime": "09:00",
+        "enabled": true
+      },
+      {
+        "channel": "EMAIL",
+        "offsetDays": 7,
+        "localSendTime": "09:00",
+        "enabled": true
+      },
+      {
+        "channel": "IN_APP",
+        "offsetDays": 3,
+        "localSendTime": "09:00",
+        "enabled": true
+      },
+      {
+        "channel": "EMAIL",
+        "offsetDays": 3,
+        "localSendTime": "09:00",
+        "enabled": true
+      },
+      {
+        "channel": "IN_APP",
+        "offsetDays": 1,
+        "localSendTime": "09:00",
+        "enabled": true
+      },
+      {
+        "channel": "EMAIL",
+        "offsetDays": 1,
+        "localSendTime": "09:00",
+        "enabled": true
+      }
+    ]
+  },
+  "commitmentRules": [
+    {
+      "displayName": "M2 Fixture StreamBox Demo",
+      "mode": "INHERIT",
+      "rules": []
+    },
+    {
+      "displayName": "M2 Fixture CloudNest Demo",
+      "mode": "DISABLED",
+      "rules": []
+    },
+    {
+      "displayName": "M2 Fixture FitClub Demo",
+      "mode": "INHERIT",
+      "rules": []
+    },
+    {
+      "displayName": "M2 Fixture Monsoon Utility Demo",
+      "mode": "CUSTOM",
+      "rules": [
+        {
+          "channel": "IN_APP",
+          "offsetDays": 2,
+          "localSendTime": "10:00",
+          "enabled": true
+        },
+        {
+          "channel": "EMAIL",
+          "offsetDays": 2,
+          "localSendTime": "10:00",
+          "enabled": true
+        }
+      ]
+    }
+  ]
+}

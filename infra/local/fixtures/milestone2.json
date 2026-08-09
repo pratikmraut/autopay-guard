@@ -1,0 +1,89 @@
+{
+  "fixtureVersion": 1,
+  "householdFallbackName": "Demo household",
+  "currency": "INR",
+  "commitments": [
+    {
+      "displayName": "M2 Fixture StreamBox Demo",
+      "merchantId": "10000000-0000-4000-8000-000000000001",
+      "category": "SUBSCRIPTION",
+      "paymentRail": "CARD_RECURRING",
+      "amountMinor": 50000,
+      "estimatedAmountMinor": null,
+      "variableAmount": false,
+      "frequency": "MONTHLY",
+      "intervalCount": 1,
+      "customIntervalUnit": null,
+      "anchorDate": "2024-01-31",
+      "monthDayPolicy": "LAST_DAY",
+      "maskedPaymentLabel": null
+    },
+    {
+      "displayName": "M2 Fixture CloudNest Demo",
+      "merchantId": "10000000-0000-4000-8000-000000000002",
+      "category": "SOFTWARE",
+      "paymentRail": "UPI_AUTOPAY",
+      "amountMinor": 120000,
+      "estimatedAmountMinor": null,
+      "variableAmount": false,
+      "frequency": "MONTHLY",
+      "intervalCount": 1,
+      "customIntervalUnit": null,
+      "anchorDate": "2024-01-15",
+      "monthDayPolicy": "ANCHOR_DAY",
+      "maskedPaymentLabel": null
+    },
+    {
+      "displayName": "M2 Fixture FitClub Demo",
+      "merchantId": "10000000-0000-4000-8000-000000000003",
+      "category": "MEMBERSHIP",
+      "paymentRail": "NACH_ENACH",
+      "amountMinor": 80000,
+      "estimatedAmountMinor": null,
+      "variableAmount": false,
+      "frequency": "MONTHLY",
+      "intervalCount": 1,
+      "customIntervalUnit": null,
+      "anchorDate": "2024-01-05",
+      "monthDayPolicy": "ANCHOR_DAY",
+      "maskedPaymentLabel": null
+    },
+    {
+      "displayName": "M2 Fixture Monsoon Utility Demo",
+      "merchantId": null,
+      "category": "UTILITY",
+      "paymentRail": "MERCHANT_DIRECT",
+      "amountMinor": null,
+      "estimatedAmountMinor": 200000,
+      "variableAmount": true,
+      "frequency": "MONTHLY",
+      "intervalCount": 1,
+      "customIntervalUnit": null,
+      "anchorDate": "2024-01-25",
+      "monthDayPolicy": "ANCHOR_DAY",
+      "maskedPaymentLabel": null
+    }
+  ],
+  "expectedMonthlyProjection": {
+    "occurrenceCount": 4,
+    "unknownVariableOccurrenceCount": 0,
+    "currency": "INR",
+    "fixedAmountMinor": 250000,
+    "estimatedVariableAmountMinor": 200000,
+    "knownTotalMinor": 450000,
+    "fixedOccurrenceCount": 3,
+    "estimatedVariableOccurrenceCount": 1,
+    "containsEstimates": true
+  },
+  "expectedAnnualizedProjection": {
+    "occurrenceCount": 48,
+    "unknownVariableOccurrenceCount": 0,
+    "currency": "INR",
+    "fixedAmountMinor": 3000000,
+    "estimatedVariableAmountMinor": 2400000,
+    "knownTotalMinor": 5400000,
+    "fixedOccurrenceCount": 36,
+    "estimatedVariableOccurrenceCount": 12,
+    "containsEstimates": true
+  }
+}

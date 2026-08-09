@@ -1,0 +1,235 @@
+name: autopay-guard
+
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-autopay_guard}
+      POSTGRES_USER: ${POSTGRES_USER:-autopay_guard_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run 'make bootstrap' to generate .env}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=trust
+      APP_DB_USER: ${APP_DB_USER:-autopay_guard}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_DB_NAME: ${KEYCLOAK_DB_NAME:-keycloak}
+      KEYCLOAK_DB_USER: ${KEYCLOAK_DB_USER:-keycloak}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Run 'make bootstrap' to generate .env}
+      TZ: ${TZ:-Asia/Kolkata}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./infra/local/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'pg_isready --username="$$POSTGRES_USER" --dbname="$$POSTGRES_DB"',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - local
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.0
+    restart: unless-stopped
+    command:
+      - start-dev
+      - --import-realm
+      - >-
+        --spi-admin--allowed-system-variables=KEYCLOAK_WEB_CLIENT_SECRET,KEYCLOAK_FAKE_USER_PASSWORD,KEYCLOAK_FAKE_MEMBER_PASSWORD,KEYCLOAK_FAKE_FOREIGN_PASSWORD,KEYCLOAK_FAKE_GUIDE_ADMIN_PASSWORD,KEYCLOAK_FAKE_PRIVACY_ADMIN_PASSWORD,KEYCLOAK_FAKE_AUDIT_READ_PASSWORD,KEYCLOAK_FAKE_SUPPORT_PASSWORD,KEYCLOAK_FAKE_DELETION_PASSWORD
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-local-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME:-keycloak}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_PORT:-8081}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_FAKE_USER_USERNAME: ${KEYCLOAK_FAKE_USER_USERNAME:-demo@autopayguard.local}
+      KEYCLOAK_FAKE_USER_PASSWORD: ${KEYCLOAK_FAKE_USER_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_FAKE_MEMBER_USERNAME: ${KEYCLOAK_FAKE_MEMBER_USERNAME:-member@autopayguard.local}
+      KEYCLOAK_FAKE_MEMBER_PASSWORD: ${KEYCLOAK_FAKE_MEMBER_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_FAKE_FOREIGN_USERNAME: ${KEYCLOAK_FAKE_FOREIGN_USERNAME:-foreign@autopayguard.local}
+      KEYCLOAK_FAKE_FOREIGN_PASSWORD: ${KEYCLOAK_FAKE_FOREIGN_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_FAKE_GUIDE_ADMIN_USERNAME: ${KEYCLOAK_FAKE_GUIDE_ADMIN_USERNAME:-admin@autopayguard.local}
+      KEYCLOAK_FAKE_GUIDE_ADMIN_PASSWORD: ${KEYCLOAK_FAKE_GUIDE_ADMIN_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_FAKE_PRIVACY_ADMIN_USERNAME: ${KEYCLOAK_FAKE_PRIVACY_ADMIN_USERNAME:-privacy-admin@autopayguard.local}
+      KEYCLOAK_FAKE_PRIVACY_ADMIN_PASSWORD: ${KEYCLOAK_FAKE_PRIVACY_ADMIN_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_FAKE_AUDIT_READ_USERNAME: ${KEYCLOAK_FAKE_AUDIT_READ_USERNAME:-audit-reader@autopayguard.local}
+      KEYCLOAK_FAKE_AUDIT_READ_PASSWORD: ${KEYCLOAK_FAKE_AUDIT_READ_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_FAKE_SUPPORT_USERNAME: ${KEYCLOAK_FAKE_SUPPORT_USERNAME:-support@autopayguard.local}
+      KEYCLOAK_FAKE_SUPPORT_PASSWORD: ${KEYCLOAK_FAKE_SUPPORT_PASSWORD:?Run 'make bootstrap' to generate .env}
+      KEYCLOAK_FAKE_DELETION_USERNAME: ${KEYCLOAK_FAKE_DELETION_USERNAME:-deletion@autopayguard.local}
+      KEYCLOAK_FAKE_DELETION_PASSWORD: ${KEYCLOAK_FAKE_DELETION_PASSWORD:?Run 'make bootstrap' to generate .env}
+      TZ: ${TZ:-Asia/Kolkata}
+    ports:
+      - "127.0.0.1:${KEYCLOAK_PORT:-8081}:8080"
+    volumes:
+      - ./infra/local/keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "{ printf 'HEAD /health/ready HTTP/1.0\r\n\r\n' >&0; grep -q 'HTTP/1.0 200'; } 0<>/dev/tcp/127.0.0.1/9000",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - local
+
+  mailpit:
+    image: axllent/mailpit:v1.30.0
+    restart: unless-stopped
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: "500"
+      MP_ALLOW_INTERNAL_HTTP_REQUESTS: "false"
+      TZ: ${TZ:-Asia/Kolkata}
+    ports:
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    volumes:
+      - mailpit_data:/data
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - local
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/local/api.Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8080"
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-autopay_guard}
+      SPRING_DATASOURCE_USERNAME: ${APP_DB_USER:-autopay_guard}
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD:?Run 'make bootstrap' to generate .env}
+      IMPORT_FINGERPRINT_KEY: ${IMPORT_FINGERPRINT_KEY:?Run 'make bootstrap' to generate .env}
+      OIDC_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8081}/realms/autopay-guard
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/autopay-guard/protocol/openid-connect/certs
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-autopay-guard-api}
+      OIDC_AUTHORIZED_PARTY: ${OIDC_AUTHORIZED_PARTY:-autopay-guard-web}
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: "1025"
+      NOTIFICATION_EMAIL_MODE: MAILPIT
+      NOTIFICATION_FROM_ADDRESS: no-reply@autopayguard.local
+      NOTIFICATION_ALLOWED_RECIPIENT_SUFFIXES: "@autopayguard.local,.example.test"
+      NOTIFICATION_GENERATOR_CRON: "${NOTIFICATION_GENERATOR_CRON:-0 */1 * * * *}"
+      NOTIFICATION_WORKER_CRON: "${NOTIFICATION_WORKER_CRON:-*/5 * * * * *}"
+      NOTIFICATION_RECONCILIATION_CRON: "${NOTIFICATION_RECONCILIATION_CRON:-0 */5 * * * *}"
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: "256KB"
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: "320KB"
+      SPRING_SERVLET_MULTIPART_FILE_SIZE_THRESHOLD: "320KB"
+      SPRING_SERVLET_MULTIPART_LOCATION: /tmp
+      TZ: ${TZ:-Asia/Kolkata}
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--spider",
+          "http://127.0.0.1:8080/actuator/health/readiness",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 45s
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - local
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/local/web.Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      AUTOPAY_GUARD_RUNTIME_MODE: LOCAL
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      AUTH_SECRET: ${AUTH_SECRET:?Run 'make bootstrap' to generate .env}
+      AUTH_URL: http://localhost:${WEB_PORT:-3000}
+      AUTH_TRUST_HOST: "true"
+      AUTH_KEYCLOAK_ID: ${KEYCLOAK_WEB_CLIENT_ID:-autopay-guard-web}
+      AUTH_KEYCLOAK_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:?Run 'make bootstrap' to generate .env}
+      AUTH_KEYCLOAK_ISSUER: http://localhost:${KEYCLOAK_PORT:-8081}/realms/autopay-guard
+      AUTH_KEYCLOAK_INTERNAL_ISSUER: http://keycloak:8080/realms/autopay-guard
+      API_BASE_URL: http://api:8080
+      TZ: ${TZ:-Asia/Kolkata}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/apps/web/.next/cache:uid=1000,gid=1000,mode=0755
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - local
+
+volumes:
+  postgres_data:
+  mailpit_data:
+
+networks:
+  local:
+    driver: bridge

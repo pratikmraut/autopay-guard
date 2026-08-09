@@ -1,0 +1,10 @@
+app:
+  identity:
+    # Development only: a valid fake Keycloak identity is mapped on first API use.
+    auto-provision: true
+  notifications:
+    generator-cron: ${NOTIFICATION_GENERATOR_CRON:0 */1 * * * *}
+    worker-cron: ${NOTIFICATION_WORKER_CRON:*/5 * * * * *}
+    reconciliation-cron: ${NOTIFICATION_RECONCILIATION_CRON:0 */5 * * * *}
+    email:
+      mode: ${NOTIFICATION_EMAIL_MODE:MAILPIT}

@@ -1,0 +1,260 @@
+{
+  "realm": "autopay-guard",
+  "displayName": "AutoPay Guard Local",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": false,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "maxDeltaTimeSeconds": 43200,
+  "identityProviders": [],
+  "roles": {
+    "client": {
+      "autopay-guard-api": [
+        {
+          "name": "USER",
+          "description": "Normal AutoPay Guard user"
+        },
+        {
+          "name": "GUIDE_ADMIN",
+          "description": "Publishes and manages fictional local cancellation guides"
+        },
+        {
+          "name": "PRIVACY_ADMIN",
+          "description": "Processes fake-local privacy requests and simulated holds"
+        },
+        {
+          "name": "AUDIT_READ",
+          "description": "Reads redacted fake-local audit events"
+        },
+        {
+          "name": "SUPPORT_READ",
+          "description": "Reads time-bound redacted fake-local support diagnostics"
+        }
+      ]
+    }
+  },
+  "clients": [
+    {
+      "clientId": "autopay-guard-api",
+      "name": "AutoPay Guard API",
+      "enabled": true,
+      "bearerOnly": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    },
+    {
+      "clientId": "autopay-guard-web",
+      "name": "AutoPay Guard Web BFF",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KEYCLOAK_WEB_CLIENT_SECRET}",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "rootUrl": "http://localhost:3000",
+      "baseUrl": "http://localhost:3000",
+      "adminUrl": "http://localhost:3000",
+      "redirectUris": ["http://localhost:3000/api/auth/callback/keycloak"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "autopay-guard-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "autopay-guard-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "username": "demo@autopayguard.local",
+      "email": "demo@autopayguard.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Demo",
+      "lastName": "User",
+      "clientRoles": {
+        "autopay-guard-api": ["USER"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_FAKE_USER_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "username": "member@autopayguard.local",
+      "email": "member@autopayguard.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Member",
+      "lastName": "User",
+      "clientRoles": {
+        "autopay-guard-api": ["USER"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_FAKE_MEMBER_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "55555555-5555-4555-8555-555555555555",
+      "username": "foreign@autopayguard.local",
+      "email": "foreign@autopayguard.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Foreign",
+      "lastName": "User",
+      "clientRoles": {
+        "autopay-guard-api": ["USER"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_FAKE_FOREIGN_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "username": "admin@autopayguard.local",
+      "email": "admin@autopayguard.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Admin",
+      "lastName": "Operator",
+      "clientRoles": {
+        "autopay-guard-api": ["GUIDE_ADMIN"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_FAKE_GUIDE_ADMIN_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "username": "privacy-admin@autopayguard.local",
+      "email": "privacy-admin@autopayguard.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Privacy",
+      "lastName": "Operator",
+      "clientRoles": {
+        "autopay-guard-api": ["PRIVACY_ADMIN"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_FAKE_PRIVACY_ADMIN_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "77777777-7777-4777-8777-777777777777",
+      "username": "audit-reader@autopayguard.local",
+      "email": "audit-reader@autopayguard.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Audit",
+      "lastName": "Reader",
+      "clientRoles": {
+        "autopay-guard-api": ["AUDIT_READ"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_FAKE_AUDIT_READ_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "44444444-4444-4444-8444-444444444444",
+      "username": "support@autopayguard.local",
+      "email": "support@autopayguard.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Support",
+      "lastName": "Operator",
+      "clientRoles": {
+        "autopay-guard-api": ["SUPPORT_READ"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_FAKE_SUPPORT_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "88888888-8888-4888-8888-888888888888",
+      "username": "deletion@autopayguard.local",
+      "email": "deletion@autopayguard.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Disposable",
+      "lastName": "User",
+      "clientRoles": {
+        "autopay-guard-api": ["USER"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_FAKE_DELETION_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

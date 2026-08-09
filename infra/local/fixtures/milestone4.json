@@ -1,0 +1,189 @@
+{
+  "fixtureVersion": 1,
+  "structuralReviewedAt": "2026-07-27T00:00:00Z",
+  "reviewIntervalDays": 60,
+  "riskNoticeIncludes": "Fictional local guidance only.",
+  "serviceTargetPath": "/manage/subscription",
+  "mandateTarget": "autopayguard-demo://mandates/service/manage",
+  "reservedLiveCommitmentNames": [
+    "M4 Live Self Report",
+    "M4 Live Unsafe Feedback",
+    "M4 Live Conflict"
+  ],
+  "canonicalCommitmentGuides": [
+    {
+      "displayName": "M2 Fixture StreamBox Demo",
+      "guideId": "40000000-0000-4000-8000-000000000001"
+    },
+    {
+      "displayName": "M2 Fixture CloudNest Demo",
+      "guideId": "40000000-0000-4000-8000-000000000002"
+    },
+    {
+      "displayName": "M2 Fixture FitClub Demo",
+      "guideId": "40000000-0000-4000-8000-000000000003"
+    }
+  ],
+  "guides": [
+    {
+      "number": 1,
+      "merchantId": "10000000-0000-4000-8000-000000000001",
+      "guideId": "40000000-0000-4000-8000-000000000001",
+      "merchantName": "StreamBox Demo",
+      "category": "SUBSCRIPTION",
+      "host": "streambox.example"
+    },
+    {
+      "number": 2,
+      "merchantId": "10000000-0000-4000-8000-000000000002",
+      "guideId": "40000000-0000-4000-8000-000000000002",
+      "merchantName": "CloudNest Demo",
+      "category": "SOFTWARE",
+      "host": "cloudnest.example"
+    },
+    {
+      "number": 3,
+      "merchantId": "10000000-0000-4000-8000-000000000003",
+      "guideId": "40000000-0000-4000-8000-000000000003",
+      "merchantName": "FitClub Demo",
+      "category": "MEMBERSHIP",
+      "host": "fitclub.example"
+    },
+    {
+      "number": 4,
+      "merchantId": "10000000-0000-4000-8000-000000000004",
+      "guideId": "40000000-0000-4000-8000-000000000004",
+      "merchantName": "Demo Service 04",
+      "category": "SUBSCRIPTION",
+      "host": "service04.example"
+    },
+    {
+      "number": 5,
+      "merchantId": "10000000-0000-4000-8000-000000000005",
+      "guideId": "40000000-0000-4000-8000-000000000005",
+      "merchantName": "Demo Service 05",
+      "category": "MEMBERSHIP",
+      "host": "service05.example"
+    },
+    {
+      "number": 6,
+      "merchantId": "10000000-0000-4000-8000-000000000006",
+      "guideId": "40000000-0000-4000-8000-000000000006",
+      "merchantName": "Demo Service 06",
+      "category": "SOFTWARE",
+      "host": "service06.example"
+    },
+    {
+      "number": 7,
+      "merchantId": "10000000-0000-4000-8000-000000000007",
+      "guideId": "40000000-0000-4000-8000-000000000007",
+      "merchantName": "Demo Service 07",
+      "category": "SUBSCRIPTION",
+      "host": "service07.example"
+    },
+    {
+      "number": 8,
+      "merchantId": "10000000-0000-4000-8000-000000000008",
+      "guideId": "40000000-0000-4000-8000-000000000008",
+      "merchantName": "Demo Service 08",
+      "category": "MEMBERSHIP",
+      "host": "service08.example"
+    },
+    {
+      "number": 9,
+      "merchantId": "10000000-0000-4000-8000-000000000009",
+      "guideId": "40000000-0000-4000-8000-000000000009",
+      "merchantName": "Demo Service 09",
+      "category": "SOFTWARE",
+      "host": "service09.example"
+    },
+    {
+      "number": 10,
+      "merchantId": "10000000-0000-4000-8000-000000000010",
+      "guideId": "40000000-0000-4000-8000-000000000010",
+      "merchantName": "Demo Service 10",
+      "category": "SUBSCRIPTION",
+      "host": "service10.example"
+    },
+    {
+      "number": 11,
+      "merchantId": "10000000-0000-4000-8000-000000000011",
+      "guideId": "40000000-0000-4000-8000-000000000011",
+      "merchantName": "Demo Service 11",
+      "category": "MEMBERSHIP",
+      "host": "service11.example"
+    },
+    {
+      "number": 12,
+      "merchantId": "10000000-0000-4000-8000-000000000012",
+      "guideId": "40000000-0000-4000-8000-000000000012",
+      "merchantName": "Demo Service 12",
+      "category": "SOFTWARE",
+      "host": "service12.example"
+    },
+    {
+      "number": 13,
+      "merchantId": "10000000-0000-4000-8000-000000000013",
+      "guideId": "40000000-0000-4000-8000-000000000013",
+      "merchantName": "Demo Service 13",
+      "category": "SUBSCRIPTION",
+      "host": "service13.example"
+    },
+    {
+      "number": 14,
+      "merchantId": "10000000-0000-4000-8000-000000000014",
+      "guideId": "40000000-0000-4000-8000-000000000014",
+      "merchantName": "Demo Service 14",
+      "category": "MEMBERSHIP",
+      "host": "service14.example"
+    },
+    {
+      "number": 15,
+      "merchantId": "10000000-0000-4000-8000-000000000015",
+      "guideId": "40000000-0000-4000-8000-000000000015",
+      "merchantName": "Demo Service 15",
+      "category": "SOFTWARE",
+      "host": "service15.example"
+    },
+    {
+      "number": 16,
+      "merchantId": "10000000-0000-4000-8000-000000000016",
+      "guideId": "40000000-0000-4000-8000-000000000016",
+      "merchantName": "Demo Service 16",
+      "category": "SUBSCRIPTION",
+      "host": "service16.example"
+    },
+    {
+      "number": 17,
+      "merchantId": "10000000-0000-4000-8000-000000000017",
+      "guideId": "40000000-0000-4000-8000-000000000017",
+      "merchantName": "Demo Service 17",
+      "category": "MEMBERSHIP",
+      "host": "service17.example"
+    },
+    {
+      "number": 18,
+      "merchantId": "10000000-0000-4000-8000-000000000018",
+      "guideId": "40000000-0000-4000-8000-000000000018",
+      "merchantName": "Demo Service 18",
+      "category": "SOFTWARE",
+      "host": "service18.example"
+    },
+    {
+      "number": 19,
+      "merchantId": "10000000-0000-4000-8000-000000000019",
+      "guideId": "40000000-0000-4000-8000-000000000019",
+      "merchantName": "Demo Service 19",
+      "category": "SUBSCRIPTION",
+      "host": "service19.example"
+    },
+    {
+      "number": 20,
+      "merchantId": "10000000-0000-4000-8000-000000000020",
+      "guideId": "40000000-0000-4000-8000-000000000020",
+      "merchantName": "Demo Service 20",
+      "category": "MEMBERSHIP",
+      "host": "service20.example"
+    }
+  ]
+}

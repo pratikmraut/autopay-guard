@@ -1,0 +1,23 @@
+{
+  "name": "@autopay-guard/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "generate": "node scripts/generate-openapi-client.mjs",
+    "check:generated": "node scripts/generate-openapi-client.test.mjs && node scripts/generate-openapi-client.mjs --check",
+    "format:check": "prettier --check \"src/**/*.ts\" \"scripts/**/*.mjs\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2",
+    "typescript": "5.9.2"
+  }
+}

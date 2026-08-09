@@ -1,0 +1,20 @@
+{
+  "name": "autopay-guard",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": "22.19.x",
+    "pnpm": "11.9.x"
+  },
+  "scripts": {
+    "dev": "pnpm --dir apps/web dev",
+    "format:check": "pnpm --recursive --if-present run format:check",
+    "lint": "pnpm --recursive --if-present run lint",
+    "typecheck": "pnpm --recursive --if-present run typecheck",
+    "test": "pnpm --recursive --if-present run test",
+    "build": "pnpm --recursive --if-present run build",
+    "e2e": "pnpm --dir apps/web e2e",
+    "contracts:check": "pnpm --dir packages/contracts check:generated"
+  }
+}

@@ -1,0 +1,16 @@
+package in.autopayguard.api.commitment;
+
+public enum ReviewAction {
+    KEEP,
+    REVIEW,
+    PAUSE_TRACKING,
+    CANCEL_WITH_PROVIDER,
+    DOWNGRADE_WITH_PROVIDER,
+    SWITCH_PROVIDER,
+    CONFIRM_BILL,
+    COMPARE_PROVIDERS,
+    DUE_DATE_READINESS,
+    PAYMENT_CONFIRMATION,
+    RENEWAL_READINESS,
+    TRACK
+}

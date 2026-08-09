@@ -1,0 +1,19 @@
+packages:
+  - apps/*
+  - packages/*
+
+overrides:
+  nanoid: 3.3.17
+  postcss: 8.5.23
+  sharp: 0.35.3
+
+allowBuilds:
+  "@tailwindcss/oxide": true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+
+engineStrict: true
+nodeVersion: 22.19.0
+saveExact: true
+strictPeerDependencies: true

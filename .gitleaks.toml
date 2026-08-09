@@ -1,0 +1,24 @@
+title = "AutoPay Guard Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Environment-variable references and generated-value markers are not credentials"
+regexTarget = "match"
+regexes = [
+  '''\$\{KEYCLOAK_(WEB_CLIENT_SECRET|FAKE_USER_PASSWORD)\}''',
+  '''generated-by-make-bootstrap''',
+]
+
+[[allowlists]]
+description = "Generated dependencies, build output, tools, and test diagnostics are not source"
+paths = [
+  '''(^|/)\.m2-backend-tests/''',
+  '''(^|/)\.next/''',
+  '''(^|/)\.tools/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)playwright-report/''',
+  '''(^|/)target/''',
+  '''(^|/)test-results/''',
+]

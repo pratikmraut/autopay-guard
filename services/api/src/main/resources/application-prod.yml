@@ -1,0 +1,46 @@
+spring:
+  flyway:
+    user: ${SPRING_FLYWAY_USER}
+    password: ${SPRING_FLYWAY_PASSWORD}
+    clean-disabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  mail:
+    test-connection: false
+
+app:
+  notifications:
+    email:
+      mode: DISABLED
+  security:
+    issuer-uri: ${OIDC_ISSUER_URI}
+    jwk-set-uri: ${OIDC_JWK_SET_URI}
+    outbound-allowed-origins: ${API_OUTBOUND_ALLOWED_ORIGINS}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  health:
+    mail:
+      enabled: false
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+server:
+  forward-headers-strategy: none
+  error:
+    include-exception: false
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never

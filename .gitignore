@@ -1,0 +1,35 @@
+# Local configuration and secrets
+.env*
+!.env.example
+
+# Java
+services/api/target/
+services/api/target-m6*/
+.m2-backend-tests/
+.mvn/timing.properties
+
+# JavaScript
+node_modules/
+.pnpm-store/
+apps/web/.next/
+apps/web/out/
+apps/web/coverage/
+apps/web/playwright-report/
+apps/web/test-results/
+packages/contracts/generated/
+*.tsbuildinfo
+
+# IDE and operating system
+.tools/
+.idea/
+.vscode/
+.project
+.classpath
+.settings/
+.DS_Store
+Thumbs.db
+
+# Runtime files
+*.log
+tmp/
+coverage/

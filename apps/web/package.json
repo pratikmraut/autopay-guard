@@ -1,0 +1,50 @@
+{
+  "name": "@autopay-guard/web",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "dev": "node raw-request-gate.mjs dev",
+    "build": "next build",
+    "start": "node raw-request-gate.mjs start",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test raw-request-gate.test.mjs && vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@autopay-guard/contracts": "workspace:*",
+    "@hookform/resolvers": "5.2.1",
+    "next": "16.2.11",
+    "next-auth": "5.0.0-beta.32",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-hook-form": "7.62.0",
+    "server-only": "0.0.1",
+    "zod": "4.1.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.61.1",
+    "@tailwindcss/postcss": "4.1.13",
+    "@testing-library/jest-dom": "6.8.0",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1",
+    "@types/node": "24.3.0",
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
+    "@vitejs/plugin-react": "5.0.2",
+    "eslint": "9.34.0",
+    "eslint-config-next": "16.2.11",
+    "jsdom": "26.1.0",
+    "prettier": "3.6.2",
+    "tailwindcss": "4.1.13",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  }
+}
