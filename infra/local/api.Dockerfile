@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 
 WORKDIR /workspace
 
@@ -9,7 +9,7 @@ RUN chmod +x mvnw && ./mvnw --batch-mode --no-transfer-progress dependency:go-of
 COPY services/api/src src
 RUN ./mvnw --batch-mode --no-transfer-progress -DskipTests package
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 RUN apk upgrade --no-cache \
     && addgroup -S app \
