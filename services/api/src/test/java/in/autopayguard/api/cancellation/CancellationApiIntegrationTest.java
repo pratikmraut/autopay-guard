@@ -15,6 +15,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
@@ -1257,7 +1258,7 @@ class CancellationApiIntegrationTest {
                                 String.class,
                                 commitment.id()));
 
-        installPublishedGuideV2(guideId);
+        CatalogHeadSnapshot originalHead = installPublishedGuideV2(guideId);
         try {
             jdbcTemplate.update(
                     """
@@ -1295,7 +1296,7 @@ class CancellationApiIntegrationTest {
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.detail").value("An unexpected error occurred."));
         } finally {
-            removePublishedGuideV2(guideId);
+            removePublishedGuideV2(guideId, originalHead);
         }
     }
 
@@ -1332,7 +1333,8 @@ class CancellationApiIntegrationTest {
                                                 "$.guide.tracks[0].steps[0].instruction")
                                         .value(v1Instruction));
 
-        installPublishedGuideV2(fixture.guideId());
+        CatalogHeadSnapshot originalHead =
+                installPublishedGuideV2(fixture.guideId());
         try {
             mockMvc.perform(
                             get(
@@ -1402,7 +1404,7 @@ class CancellationApiIntegrationTest {
                                     jsonPath("$.guide.tracks[0].steps[1].target")
                                             .isEmpty());
         } finally {
-            removePublishedGuideV2(fixture.guideId());
+            removePublishedGuideV2(fixture.guideId(), originalHead);
         }
     }
 
@@ -2005,7 +2007,26 @@ class CancellationApiIntegrationTest {
         return body;
     }
 
-    private void installPublishedGuideV2(UUID guideId) {
+    private CatalogHeadSnapshot installPublishedGuideV2(UUID guideId) {
+        CatalogHeadSnapshot originalHead =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT current_published_version, state,
+                               optimistic_version, updated_at
+                        FROM cancellation_guide_catalog_state
+                        WHERE guide_id = ?
+                        """,
+                        (row, ignored) ->
+                                new CatalogHeadSnapshot(
+                                        row.getObject(
+                                                "current_published_version",
+                                                Integer.class),
+                                        row.getString("state"),
+                                        row.getLong("optimistic_version"),
+                                        row.getObject(
+                                                "updated_at",
+                                                OffsetDateTime.class)),
+                        guideId);
         jdbcTemplate.update(
                 """
                 INSERT INTO cancellation_guide_versions (
@@ -2088,17 +2109,24 @@ class CancellationApiIntegrationTest {
                 WHERE guide_id = ?
                 """,
                 guideId);
+        return originalHead;
     }
 
-    private void removePublishedGuideV2(UUID guideId) {
+    private void removePublishedGuideV2(
+            UUID guideId, CatalogHeadSnapshot originalHead) {
         jdbcTemplate.update(
                 """
                 UPDATE cancellation_guide_catalog_state
-                SET current_published_version = 1,
-                    optimistic_version = optimistic_version + 1,
-                    updated_at = TIMESTAMP WITH TIME ZONE '2026-07-27 00:00:00+00:00'
+                SET current_published_version = ?,
+                    state = ?,
+                    optimistic_version = ?,
+                    updated_at = ?
                 WHERE guide_id = ?
                 """,
+                originalHead.currentPublishedVersion(),
+                originalHead.state(),
+                originalHead.optimisticVersion(),
+                originalHead.updatedAt(),
                 guideId);
         jdbcTemplate.update(
                 """
@@ -2182,6 +2210,12 @@ class CancellationApiIntegrationTest {
             UUID guideId,
             int guideVersion,
             UUID attemptId) {}
+
+    private record CatalogHeadSnapshot(
+            Integer currentPublishedVersion,
+            String state,
+            long optimisticVersion,
+            OffsetDateTime updatedAt) {}
 
     @TestConfiguration(proxyBeanMethods = false)
     static class ClockConfiguration {
