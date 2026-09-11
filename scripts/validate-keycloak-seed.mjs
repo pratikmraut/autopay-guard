@@ -1,7 +1,23 @@
+import {
+  isNarrowLocalApiRole,
+  localAccountPolicyMismatches,
+  localAccountRealmSettings,
+  localDefaultRoleChanges,
+  localRegistrationEnabled,
+} from "./local-account-policy.mjs";
+
 const REALM = "autopay-guard";
 const API_CLIENT_ID = "autopay-guard-api";
 const LOCAL_IDENTITY_SUFFIX = "@autopayguard.local";
 const REQUEST_TIMEOUT_MS = 10_000;
+if (process.env.AUTOPAY_GUARD_RUNTIME_MODE !== "LOCAL") {
+  throw new Error(
+    "Identity reconciliation is restricted to the LOCAL rehearsal.",
+  );
+}
+const selfRegistration = localRegistrationEnabled(
+  process.env.LOCAL_SELF_REGISTRATION_ENABLED,
+);
 
 const managedRoles = new Map([
   ["USER", "Normal AutoPay Guard user"],
@@ -229,6 +245,14 @@ const adminRequest = async (
 
 const realmAdminPath = `/admin/realms/${encodeURIComponent(REALM)}`;
 
+// Realm imports do not update existing databases. Reconcile only the explicitly
+// local account settings; fixed Mailpit SMTP cannot send to an external vendor.
+await adminRequest(realmAdminPath, {
+  method: "PUT",
+  body: localAccountRealmSettings(selfRegistration),
+  description: "the local signup and capture-email policy reconciliation",
+  expectedStatuses: [204],
+});
 const realmResponse = await adminRequest(realmAdminPath, {
   description: "the fake-local realm configuration lookup",
 });
@@ -244,25 +268,16 @@ const identityProviders = await readJson(
   identityProvidersResponse,
   "Keycloak fake-local identity-provider inventory lookup",
 );
-const realmPolicyMismatches = [];
-for (const [property, expected] of [
-  ["registrationAllowed", false],
-  ["resetPasswordAllowed", false],
-  ["rememberMe", false],
-  ["editUsernameAllowed", false],
-  ["duplicateEmailsAllowed", false],
-  ["bruteForceProtected", true],
-]) {
-  if (realmRepresentation?.[property] !== expected) {
-    realmPolicyMismatches.push(property);
-  }
-}
+const realmPolicyMismatches = localAccountPolicyMismatches(
+  realmRepresentation,
+  selfRegistration,
+);
 if (!Array.isArray(identityProviders) || identityProviders.length > 0) {
   realmPolicyMismatches.push("identityProviders");
 }
 if (realmPolicyMismatches.length > 0) {
   throw new Error(
-    `The fake-local realm does not preserve its closed-registration identity policy: ${realmPolicyMismatches.join(", ")}.`,
+    `The fake-local realm does not preserve its account policy: ${realmPolicyMismatches.join(", ")}.`,
   );
 }
 
@@ -309,7 +324,9 @@ if (
   apiClient.directAccessGrantsEnabled !== false ||
   apiClient.serviceAccountsEnabled !== false
 ) {
-  throw new Error("The fake-local API client does not preserve its closed grant policy.");
+  throw new Error(
+    "The fake-local API client does not preserve its closed grant policy.",
+  );
 }
 
 const webClientId = process.env.KEYCLOAK_WEB_CLIENT_ID ?? "autopay-guard-web";
@@ -370,9 +387,12 @@ if (
   webClient.webOrigins.length !== 1 ||
   webClient.webOrigins[0] !== expectedWebOrigin ||
   webClient.attributes?.["pkce.code.challenge.method"] !== "S256" ||
-  webClient.attributes?.["post.logout.redirect.uris"] !== `${expectedWebOrigin}/*`
+  webClient.attributes?.["post.logout.redirect.uris"] !==
+    `${expectedWebOrigin}/*`
 ) {
-  throw new Error("The fake-local web client does not preserve its closed grant policy.");
+  throw new Error(
+    "The fake-local web client does not preserve its closed grant policy.",
+  );
 }
 const apiClientRolesPath = `${realmAdminPath}/clients/${encodeURIComponent(apiClientInternalId)}/roles`;
 
@@ -413,18 +433,10 @@ const ensureRole = async (roleName, description) => {
   }
 
   if (
-    typeof role !== "object" ||
-    role === null ||
-    typeof role.id !== "string" ||
-    role.id.length === 0 ||
-    role.name !== roleName ||
-    role.description !== description ||
-    role.clientRole !== true ||
-    role.containerId !== apiClientInternalId
+    !isNarrowLocalApiRole(role, roleName, apiClientInternalId) ||
+    role.description !== description
   ) {
-    throw new Error(
-      `The ${roleName} fake-local API client role is not ready.`,
-    );
+    throw new Error(`The ${roleName} fake-local API client role is not ready.`);
   }
   return role;
 };
@@ -432,6 +444,68 @@ const ensureRole = async (roleName, description) => {
 const roleRepresentations = new Map();
 for (const [roleName, description] of managedRoles) {
   roleRepresentations.set(roleName, await ensureRole(roleName, description));
+}
+
+const defaultRoleName = "default-roles-autopay-guard";
+const defaultRolePath = `${realmAdminPath}/roles/${defaultRoleName}`;
+const defaultRoleResponse = await adminRequest(defaultRolePath, {
+  description: "the local default role lookup",
+});
+const defaultRole = await readJson(defaultRoleResponse, "Local default role");
+if (
+  !defaultRole?.id ||
+  defaultRole.name !== defaultRoleName ||
+  defaultRole.clientRole !== false
+) {
+  throw new Error("The local default role is not ready.");
+}
+const composites = await readJson(
+  await adminRequest(`${defaultRolePath}/composites`, {
+    description: "the local default role composite lookup",
+  }),
+  "Local default role composites",
+);
+if (!Array.isArray(composites))
+  throw new Error("Invalid local default role composites.");
+const userRole = roleRepresentations.get("USER");
+const defaultRoleChanges = localDefaultRoleChanges(composites, userRole);
+if (defaultRoleChanges.remove.length > 0) {
+  await adminRequest(`${defaultRolePath}/composites`, {
+    method: "DELETE",
+    body: defaultRoleChanges.remove,
+    description: "the local default-role least-privilege reconciliation",
+    expectedStatuses: [204],
+  });
+}
+if (defaultRoleChanges.add.length > 0) {
+  await adminRequest(`${defaultRolePath}/composites`, {
+    method: "POST",
+    body: defaultRoleChanges.add,
+    description: "the local normal-user default role",
+    expectedStatuses: [204],
+  });
+}
+await adminRequest(realmAdminPath, {
+  method: "PUT",
+  body: { defaultRole },
+  description: "the local enrollment default role",
+  expectedStatuses: [204],
+});
+const finalComposites = await readJson(
+  await adminRequest(`${defaultRolePath}/composites`, {
+    description: "the effective local default role check",
+  }),
+  "Local effective default role",
+);
+if (
+  !Array.isArray(finalComposites) ||
+  finalComposites.length !== 1 ||
+  finalComposites[0].id !== userRole.id ||
+  !isNarrowLocalApiRole(finalComposites[0], "USER", apiClientInternalId)
+) {
+  throw new Error(
+    "The local signup default role is not least-privilege USER-only.",
+  );
 }
 
 const removeLegacyRealmRole = async (roleName) => {
@@ -490,9 +564,9 @@ const findUserByUsername = async (username) => {
   return exactUsers[0] ?? null;
 };
 
-const getApiClientMappings = async (userId) => {
+const getApiClientMappings = async (userId, effective = false) => {
   const response = await adminRequest(
-    `${realmAdminPath}/users/${encodeURIComponent(userId)}/role-mappings/clients/${encodeURIComponent(apiClientInternalId)}`,
+    `${realmAdminPath}/users/${encodeURIComponent(userId)}/role-mappings/clients/${encodeURIComponent(apiClientInternalId)}${effective ? "/composite" : ""}`,
     {
       description: "the fake-local identity API role-mapping lookup",
     },
@@ -583,7 +657,7 @@ const validateIdentity = async (userId, identity) => {
     );
   }
 
-  const mappings = await getApiClientMappings(userId);
+  const mappings = await getApiClientMappings(userId, true);
   const actualApplicationRoles = mappings
     .map((mapping) => mapping?.name)
     .sort();
@@ -674,6 +748,17 @@ const reconcileIdentity = async (identity) => {
         temporary: false,
       },
       description: "the fake-local identity credential reconciliation",
+      expectedStatuses: [204],
+    },
+  );
+  // Reserved staff must not inherit USER via the new signup default role.
+  // Each fixture already has an explicit exact application-client role.
+  await adminRequest(
+    `${realmAdminPath}/users/${encodeURIComponent(user.id)}/role-mappings/realm`,
+    {
+      method: "DELETE",
+      body: [defaultRole],
+      description: "the reserved identity default-role removal",
       expectedStatuses: [204],
     },
   );

@@ -1,6 +1,27 @@
 # Project status
 
-Last updated: 2026-08-09
+Last updated: 2026-09-12
+
+## Latest portfolio slice
+
+The user authorized account/demo code changes and sanitized GitHub publication,
+with hosting to follow separately. The new local slice adds isolated browser
+sample data, provider-owned registration/verification/recovery, explicit account
+enrollment with current-notice acceptance, and issuer-bound new accounts. The
+default role is limited to USER; staff fixtures keep their narrow roles.
+
+Implementation, independent code review and the full local integration rehearsal
+are complete. The post-patch `make check` passed: 315 Surefire, 39 PostgreSQL,
+564 Vitest, four raw-request, nine script and 30 browser tests; six existing
+guarded browser cases were intentionally skipped. Dependency and source-secret
+checks passed, and refreshed source/application-image scans reported zero
+HIGH/CRITICAL findings. Detailed local evidence is in `CODEX_RESULT.md`; the
+actual Git commit and its remote checks are the publication/CI evidence. See
+`PORTFOLIO_ACCOUNTS_AND_DEMO.md` and ADR-020 for operation and limits. No cloud
+deployment, real SMTP, real users, or real data were used. Private Beta remains
+NO-GO. The previous milestone and PB evidence below is historical, not evidence
+for this new source candidate. In particular, the initial source now exists on
+GitHub; old "no commit/remote" CodeQL statements describe the earlier gate only.
 
 ## Current phase
 

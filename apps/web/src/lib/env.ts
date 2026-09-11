@@ -18,6 +18,7 @@ const serverEnvironmentSchema = z.object({
   API_BASE_URL: z.string().url(),
   AUTH_URL: z.string().url(),
   AUTH_TRUST_HOST: z.enum(["true", "false"]).default("false"),
+  AUTH_SELF_REGISTRATION_ENABLED: z.enum(["true", "false"]).default("false"),
   WEB_OUTBOUND_ALLOWED_ORIGINS: z.string().min(1).optional(),
 });
 
@@ -35,6 +36,7 @@ export function getServerEnvironment(): ServerEnvironment {
     API_BASE_URL: process.env.API_BASE_URL,
     AUTH_URL: process.env.AUTH_URL,
     AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST,
+    AUTH_SELF_REGISTRATION_ENABLED: process.env.AUTH_SELF_REGISTRATION_ENABLED,
     WEB_OUTBOUND_ALLOWED_ORIGINS:
       process.env.WEB_OUTBOUND_ALLOWED_ORIGINS || undefined,
   });

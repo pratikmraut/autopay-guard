@@ -532,7 +532,7 @@ class AdminCancellationGuideIntegrationTest {
         return jwt()
                 .jwt(
                         token ->
-                                token.subject(subject)
+                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject(subject)
                                         .claim("email", subject + "@example.test")
                                         .claim("name", "M5 Test User"))
                 .authorities(new SimpleGrantedAuthority("ROLE_USER"));
@@ -542,7 +542,7 @@ class AdminCancellationGuideIntegrationTest {
         return jwt()
                 .jwt(
                         token ->
-                                token.subject("m5-guide-admin")
+                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject("m5-guide-admin")
                                         .claim(
                                                 "email",
                                                 "m5-guide-admin@example.test")
@@ -555,7 +555,7 @@ class AdminCancellationGuideIntegrationTest {
         return jwt()
                 .jwt(
                         token ->
-                                token.subject("m5-audit-reader")
+                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject("m5-audit-reader")
                                         .claim(
                                                 "email",
                                                 "m5-audit-reader@example.test")

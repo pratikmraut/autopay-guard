@@ -118,6 +118,15 @@ const isSelectedImportItemIds: FieldValidator = (value) =>
 const rules: readonly BodyRule[] = [
   {
     method: "POST",
+    path: /^\/v1\/account\/enrollment$/,
+    fields: {
+      ageConfirmed: (value) => value === true,
+      privacyNoticeAccepted: (value) => value === true,
+      privacyNoticeVersion: isNoticeVersion,
+    },
+  },
+  {
+    method: "POST",
     path: /^\/v1\/privacy\/notice-acknowledgements$/,
     fields: { noticeVersion: isNoticeVersion },
   },

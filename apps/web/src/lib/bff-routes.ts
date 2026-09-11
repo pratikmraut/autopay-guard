@@ -45,6 +45,11 @@ const integerInRange =
 const rules: readonly RouteRule[] = [
   { methods: new Set(["GET"]), path: /^\/v1\/me$/ },
   {
+    methods: new Set(["POST"]),
+    path: /^\/v1\/account\/enrollment$/,
+    body: "required",
+  },
+  {
     methods: new Set(["GET"]),
     path: /^\/v1\/households$/,
     query: {

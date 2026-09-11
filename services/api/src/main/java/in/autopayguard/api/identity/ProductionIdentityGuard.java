@@ -14,6 +14,11 @@ public class ProductionIdentityGuard {
 
     ProductionIdentityGuard(
             IdentityProperties identityProperties, Environment environment) {
+        if (identityProperties.legacyIssuerUri() != null
+                && !identityProperties.legacyIssuerUri().isBlank()) {
+            throw new IllegalStateException(
+                    "Production identities must have an explicitly migrated issuer binding.");
+        }
         validate(
                 identityProperties.autoProvision(),
                 identityProperties.requireVerifiedEmail(),

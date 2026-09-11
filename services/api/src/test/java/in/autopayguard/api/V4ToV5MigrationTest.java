@@ -64,7 +64,7 @@ class V4ToV5MigrationTest {
             latest.migrate();
 
             assertThat(latest.info().current().getVersion().getVersion())
-                    .isEqualTo("6");
+                    .isEqualTo("7");
             assertThat(checksums(jdbc)).containsAllEntriesOf(priorChecksums);
             assertThat(
                             jdbc.queryForMap(

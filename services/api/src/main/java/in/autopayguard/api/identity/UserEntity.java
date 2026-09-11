@@ -19,6 +19,9 @@ class UserEntity {
     @Column(name = "oidc_subject", nullable = false, unique = true, length = 255, updatable = false)
     private String oidcSubject;
 
+    @Column(name = "oidc_issuer", length = 2048, updatable = false)
+    private String oidcIssuer;
+
     @Column(name = "email", nullable = false, length = 320)
     private String email;
 
@@ -84,6 +87,19 @@ class UserEntity {
                 "Asia/Kolkata",
                 "en-IN",
                 now);
+    }
+
+    static UserEntity createBound(
+            String issuer, String subject, String email, String displayName, Instant now) {
+        UserEntity user = create(subject, email, displayName, now);
+        user.oidcIssuer = Objects.requireNonNull(issuer);
+        return user;
+    }
+
+    boolean acceptsIssuer(String issuer, String legacyIssuerUri) {
+        return oidcIssuer == null
+                ? issuer.equals(legacyIssuerUri)
+                : issuer.equals(oidcIssuer);
     }
 
     boolean hasEmail(String normalizedEmail) {

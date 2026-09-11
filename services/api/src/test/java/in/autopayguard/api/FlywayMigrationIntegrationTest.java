@@ -23,8 +23,8 @@ class FlywayMigrationIntegrationTest {
     @Autowired private JdbcTemplate jdbcTemplate;
 
     @Test
-    void v6CreatesOnlyTheAuthorizedDomainTablesAndFictionalCatalog() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
+    void v7CreatesOnlyTheAuthorizedDomainTablesAndFictionalCatalog() {
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
 
         List<String> domainTables =
                 jdbcTemplate.queryForList(
@@ -39,6 +39,7 @@ class FlywayMigrationIntegrationTest {
                         String.class);
         assertThat(domainTables)
                 .containsExactly(
+                        "account_enrollment_lock",
                         "audit_event_locks",
                         "audit_events",
                         "cancellation_attempt_verifications",

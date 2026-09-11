@@ -11,6 +11,7 @@ export interface ApiProblem {
   detail: string;
   correlationId?: string | null;
   errors?: Record<string, string | null> | null;
+  code?: string | null;
 }
 
 export interface UpdateNotificationPreferencesRequest {
@@ -556,6 +557,24 @@ export interface AdminCancellationGuidePublication {
   publishedAt: string;
 }
 
+export interface AccountEnrollmentRequest {
+  ageConfirmed: boolean;
+  privacyNoticeAccepted: boolean;
+  privacyNoticeVersion: string;
+}
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+  displayName: string;
+  timezone: string;
+  locale: string;
+  ageConfirmed: boolean;
+  privacyNoticeAccepted: boolean;
+  privacyNoticeVersion: string | null;
+  createdAt: string;
+}
+
 export interface UpdateNotificationReadRequest {
   read: boolean;
 }
@@ -777,18 +796,6 @@ export interface MerchantSearchItem {
 
 export interface MerchantSearchResults {
   items: Array<MerchantSearchItem>;
-}
-
-export interface CurrentUser {
-  id: string;
-  email: string;
-  displayName: string;
-  timezone: string;
-  locale: string;
-  ageConfirmed: boolean;
-  privacyNoticeAccepted: boolean;
-  privacyNoticeVersion: string | null;
-  createdAt: string;
 }
 
 export interface ErrorResponse {
@@ -2047,6 +2054,14 @@ export class FoundationApi {
       "POST",
       context,
     );
+  }
+
+  async enrollAccount(
+    body: AccountEnrollmentRequest,
+    context: RequestContext = {},
+  ): Promise<CurrentUser> {
+    let requestPath = "/v1/account/enrollment";
+    return this.request<CurrentUser>(requestPath, "POST", context, body);
   }
 
   async getNotification(

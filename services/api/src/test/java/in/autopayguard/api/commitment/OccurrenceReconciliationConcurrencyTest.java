@@ -39,7 +39,7 @@ class OccurrenceReconciliationConcurrencyTest {
                 jwt()
                         .jwt(
                                 token ->
-                                        token.subject("m2-concurrent")
+                                        token.issuer("https://issuer.test.example/realms/autopay-guard").subject("m2-concurrent")
                                                 .claim(
                                                         "email",
                                                         "m2-concurrent@example.test")

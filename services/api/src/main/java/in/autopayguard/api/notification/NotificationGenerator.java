@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -37,7 +38,7 @@ public class NotificationGenerator {
     }
 
     @Scheduled(cron = "${app.notifications.generator-cron:-}", zone = "UTC")
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int generateDue() {
         Instant now = clock.instant();
         LocalDate utcDate = LocalDate.ofInstant(now, ZoneOffset.UTC);
@@ -84,6 +85,12 @@ public class NotificationGenerator {
                                 candidate.scheduledDate(),
                                 candidate.channel(),
                                 candidate.offsetDays());
+                // The candidate query's snapshot can predate another run's commit,
+                // even when its row locks are acquired after that commit. Recheck
+                // with a fresh READ_COMMITTED snapshot while holding those locks.
+                if (notificationRepository.findBySemanticKey(semanticKey).isPresent()) {
+                    continue;
+                }
                 NotificationEntity notification =
                         NotificationEntity.create(
                                 candidate.recipientUserId(),

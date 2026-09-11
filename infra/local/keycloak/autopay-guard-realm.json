@@ -3,13 +3,13 @@
   "displayName": "AutoPay Guard Local",
   "enabled": true,
   "sslRequired": "none",
-  "registrationAllowed": false,
-  "registrationEmailAsUsername": false,
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
   "rememberMe": false,
-  "verifyEmail": false,
+  "verifyEmail": true,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
-  "resetPasswordAllowed": false,
+  "resetPasswordAllowed": true,
   "editUsernameAllowed": false,
   "bruteForceProtected": true,
   "failureFactor": 5,
@@ -19,7 +19,27 @@
   "maxFailureWaitSeconds": 900,
   "maxDeltaTimeSeconds": 43200,
   "identityProviders": [],
+  "passwordPolicy": "length(12)",
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@autopayguard.local",
+    "fromDisplayName": "AutoPay Guard local rehearsal",
+    "ssl": "false",
+    "starttls": "false",
+    "auth": "false"
+  },
+  "defaultRole": { "name": "default-roles-autopay-guard" },
   "roles": {
+    "realm": [
+      {
+        "name": "default-roles-autopay-guard",
+        "description": "Normal-user enrollment only; no administrative authority",
+        "composite": true,
+        "clientRole": false,
+        "composites": { "client": { "autopay-guard-api": ["USER"] } }
+      }
+    ],
     "client": {
       "autopay-guard-api": [
         {

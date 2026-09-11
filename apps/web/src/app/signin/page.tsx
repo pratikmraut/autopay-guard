@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { BrandMark } from "@/components/brand-mark";
 import { TrustBanner } from "@/components/trust-banner";
+import { accountContinuationUrl } from "@/lib/account-registration";
 import { getServerEnvironment } from "@/lib/env";
 import { safeReturnTo } from "@/lib/safe-return-to";
 import { getOptionalSessionUser } from "@/lib/session";
@@ -19,6 +20,7 @@ interface SignInPageProps {
   searchParams: Promise<{
     callbackUrl?: string | string[];
     error?: string | string[];
+    recovery?: string | string[];
   }>;
 }
 
@@ -26,10 +28,14 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const parameters = await searchParams;
   const callbackUrl = safeReturnTo(parameters.callbackUrl);
   const authError = typeof parameters.error === "string";
+  const recovery = parameters.recovery === "1";
+  const environment = getServerEnvironment();
+  const registrationEnabled =
+    environment.AUTH_SELF_REGISTRATION_ENABLED === "true";
   const user = await getOptionalSessionUser();
 
   if (user) {
-    redirect(callbackUrl);
+    redirect(accountContinuationUrl(callbackUrl));
   }
 
   return (
@@ -60,9 +66,21 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           <p className="eyebrow">Secure access</p>
           <h2 id="signin-title">Sign in to AutoPay Guard</h2>
           <p className="mt-3 leading-7 text-slate-600">
-            Continue through our local identity provider. Your provider password
-            is never sent to AutoPay Guard.
+            Continue through our sign-in provider. Your provider password is
+            never sent to AutoPay Guard.
           </p>
+
+          {recovery && (
+            <p
+              className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950"
+              role="status"
+            >
+              Select Continue securely, then choose “Forgot password?” on the
+              provider page. Follow the email link there to reset your password.
+              {environment.AUTOPAY_GUARD_RUNTIME_MODE === "LOCAL" &&
+                " In this local rehearsal, messages are captured in Mailpit, not delivered to a real inbox."}
+            </p>
+          )}
 
           {authError && (
             <div
@@ -77,7 +95,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             action={async () => {
               "use server";
               getServerEnvironment();
-              await signIn("keycloak", { redirectTo: callbackUrl });
+              await signIn("keycloak", {
+                redirectTo: accountContinuationUrl(callbackUrl),
+              });
             }}
             className="mt-8"
           >
@@ -91,6 +111,23 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               </span>
             </button>
           </form>
+
+          <div className="mt-5 flex flex-wrap justify-between gap-4 text-sm">
+            {registrationEnabled && (
+              <Link
+                className="font-bold text-emerald-800 underline"
+                href="/signup"
+              >
+                Create account
+              </Link>
+            )}
+            <Link
+              className="font-bold text-emerald-800 underline"
+              href="/signin?recovery=1"
+            >
+              Forgot password?
+            </Link>
+          </div>
 
           <div className="mt-8">
             <TrustBanner />

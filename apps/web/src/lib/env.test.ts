@@ -38,6 +38,17 @@ describe("server environment validation", () => {
   it("accepts explicit non-placeholder local configuration", () => {
     stubEnvironment(validEnvironment);
     expect(getServerEnvironment().AUTH_KEYCLOAK_ID).toBe("autopay-guard-web");
+    expect(getServerEnvironment().AUTH_SELF_REGISTRATION_ENABLED).toBe("false");
+  });
+
+  it("requires exact opt-in for account self-registration", () => {
+    stubEnvironment(validEnvironment);
+    vi.stubEnv("AUTH_SELF_REGISTRATION_ENABLED", "true");
+    expect(getServerEnvironment().AUTH_SELF_REGISTRATION_ENABLED).toBe("true");
+    vi.stubEnv("AUTH_SELF_REGISTRATION_ENABLED", "yes");
+    expect(() => getServerEnvironment()).toThrow(
+      "AUTH_SELF_REGISTRATION_ENABLED",
+    );
   });
 
   it("accepts an exact provider-independent production boundary", () => {

@@ -3,10 +3,13 @@ package in.autopayguard.api.notification;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 import in.autopayguard.api.common.error.ResourceNotFoundException;
 import in.autopayguard.api.reminder.ReminderRuleInput;
@@ -394,6 +397,80 @@ class NotificationDeliveryPostgresIT {
                                 Integer.class,
                                 concurrent.commitmentId()))
                 .isOne();
+    }
+
+    @Test
+    void generatorRechecksCandidateSelectedBeforeCompetingTransactionCommits()
+            throws Exception {
+        LocalDate reminderDate = LocalDate.ofInstant(TEST_NOW, ZoneOffset.UTC);
+        Fixture fixture = insertFixture(reminderDate.plusDays(3));
+        insertSchedulingConfiguration(
+                fixture, LocalTime.of(9, 55), TEST_NOW.minus(Duration.ofHours(1)));
+        var selectedBeforeCommit =
+                transactions.execute(
+                        ignored ->
+                                candidates.lockDueCandidates(
+                                        reminderDate.minusDays(1),
+                                        reminderDate.plusDays(1),
+                                        notificationProperties.batchSize(),
+                                        null));
+        assertThat(selectedBeforeCommit).hasSize(1);
+
+        // PostgreSQL can evaluate the anti-join using an older statement snapshot,
+        // then acquire the commitment/occurrence locks after a competing run commits.
+        // Replay that stale result deterministically, retaining real PostgreSQL locks
+        // and transaction boundaries rather than depending on scheduler timing.
+        var staleQuery = mock(NotificationCandidateRepository.class);
+        CountDownLatch staleSelectionStarted = new CountDownLatch(1);
+        CountDownLatch competingRunCommitted = new CountDownLatch(1);
+        when(staleQuery.lockDueCandidates(any(), any(), anyInt(), isNull()))
+                .thenAnswer(
+                        ignored -> {
+                            staleSelectionStarted.countDown();
+                            assertThat(competingRunCommitted.await(10, TimeUnit.SECONDS))
+                                    .isTrue();
+                            assertThat(
+                                            jdbc.queryForList(
+                                                    """
+                                                    SELECT c.id
+                                                    FROM recurring_commitments c
+                                                    JOIN commitment_occurrences o
+                                                      ON o.commitment_id = c.id
+                                                    WHERE c.id = ? AND o.id = ?
+                                                    FOR UPDATE OF c, o
+                                                    """,
+                                                    UUID.class,
+                                                    fixture.commitmentId(),
+                                                    fixture.occurrenceId()))
+                                    .containsExactly(fixture.commitmentId());
+                            return selectedBeforeCommit;
+                        });
+        var staleGenerator =
+                new NotificationGenerator(
+                        staleQuery,
+                        notifications,
+                        deliveries,
+                        outbox,
+                        new ReminderTimePolicy(),
+                        notificationProperties,
+                        Clock.fixed(TEST_NOW, ZoneOffset.UTC));
+
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            Future<Integer> staleRun =
+                    executor.submit(
+                            () -> transactions.execute(ignored -> staleGenerator.generateDue()));
+            try {
+                assertThat(staleSelectionStarted.await(10, TimeUnit.SECONDS)).isTrue();
+                assertThat(generator.generateDue()).isOne();
+            } finally {
+                competingRunCommitted.countDown();
+            }
+            assertThat(staleRun.get(10, TimeUnit.SECONDS)).isZero();
+        }
+        assertThat(notificationCount(fixture.commitmentId(), fixture.scheduledDate(), 3))
+                .isOne();
+        assertThat(deliveries.count()).isOne();
+        assertThat(outbox.count()).isOne();
     }
 
     @Test
@@ -1720,7 +1797,7 @@ class NotificationDeliveryPostgresIT {
         verify(transport)
                 .send(
                         new NotificationEmailTransport.EmailEnvelope(
-                                "delivery@example.test",
+                                fixtureEmail(fixture.userId()),
                                 NotificationSemanticKey.messageId(
                                         semanticKey(notificationId)),
                                 NotificationOutboxWorker.EMAIL_SUBJECT,
@@ -2037,7 +2114,7 @@ class NotificationDeliveryPostgresIT {
                 """,
                 userId,
                 "notification-it-" + userId,
-                "delivery@example.test",
+                fixtureEmail(userId),
                 "Notification Test",
                 createdAt,
                 createdAt,
@@ -2496,10 +2573,15 @@ class NotificationDeliveryPostgresIT {
         String subject = "notification-it-" + fixture.userId();
         return Jwt.withTokenValue("fake")
                 .header("alg", "none")
+                .issuer("https://issuer.test.example/realms/autopay-guard")
                 .subject(subject)
-                .claim("email", "delivery@example.test")
+                .claim("email", fixtureEmail(fixture.userId()))
                 .claim("name", "Notification Test")
                 .build();
+    }
+
+    private static String fixtureEmail(UUID userId) {
+        return "delivery-" + userId + "@example.test";
     }
 
     private static void await(CountDownLatch latch) {

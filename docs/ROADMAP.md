@@ -115,6 +115,24 @@ website, vendors, real email, real merchant guides, recruitment, invitations,
 and real data remain unauthorized. All Private Beta execution gates remain
 separately evidenced and explicitly approved.
 
+## Portfolio accounts and demo (2026-09-11)
+
+Separately authorized local code and public-source work adds a no-login,
+memory-only sample workspace plus verified Keycloak registration, explicit app
+enrollment, private workspace onboarding, and provider-owned recovery. V7 binds
+new accounts to the validated issuer and subject without silently migrating
+legacy identities. See ADR-020 and `PORTFOLIO_ACCOUNTS_AND_DEMO.md`.
+
+The complete fake-local acceptance gate passed on 2026-09-12, including both
+desktop/mobile signup and recovery journeys. Publication-time dependency
+patches and a reproduced PostgreSQL reminder-deduplication race were addressed
+and reverified. Detailed results and the six guarded skips are in `CODEX_RESULT.md`.
+
+This is not a new approved production milestone or a beta launch. Tests use
+generated fictional local accounts and captured Mailpit messages. Hosting,
+approved privacy wording, real identity/email operations, legacy migration,
+security ownership, and other open beta gates remain separate work.
+
 ## Private and public beta gates
 
 Private beta requires invited adults, operational ownership, guide freshness,

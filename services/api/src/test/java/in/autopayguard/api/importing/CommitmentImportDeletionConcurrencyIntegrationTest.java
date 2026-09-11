@@ -622,7 +622,7 @@ class CommitmentImportDeletionConcurrencyIntegrationTest {
         return jwt()
                 .jwt(
                         token ->
-                                token.subject(subject)
+                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject(subject)
                                         .claim("email", email)
                                         .claim("name", displayName))
                 .authorities(new SimpleGrantedAuthority("ROLE_USER"));
@@ -632,7 +632,7 @@ class CommitmentImportDeletionConcurrencyIntegrationTest {
         return jwt()
                 .jwt(
                         token ->
-                                token.subject("m6-import-delete-privacy-admin")
+                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject("m6-import-delete-privacy-admin")
                                         .claim(
                                                 "email",
                                                 "m6-import-delete-privacy-admin@example.test")

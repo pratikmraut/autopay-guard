@@ -61,11 +61,16 @@ if (-not (Test-Path -LiteralPath (Join-Path $gitUsrBin "dirname.exe"))) {
 $pathEntries.Add($gitUsrBin)
 $pathEntries.Add($gitBin)
 
-$nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
-if (-not $nodeCommand) {
-  throw "Node.js was not found."
+$localNodeBin = Join-Path $toolsRoot "node-v22.23.2-win-x64"
+if (Test-Path -LiteralPath (Join-Path $localNodeBin "node.exe")) {
+  $nodeBin = $localNodeBin
+} else {
+  $nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
+  if (-not $nodeCommand) {
+    throw "Node.js was not found. Provision .tools\node-v22.23.2-win-x64 or install Node.js 22.23.2."
+  }
+  $nodeBin = Split-Path -Parent $nodeCommand.Source
 }
-$nodeBin = Split-Path -Parent $nodeCommand.Source
 $pathEntries.Add($nodeBin)
 
 $corepack = Join-Path $nodeBin "corepack"
@@ -74,10 +79,23 @@ if (-not (Test-Path -LiteralPath $corepack)) {
 }
 
 $dockerBin = "C:\Program Files\Docker\Docker\resources\bin"
+$dockerPluginDirectory = Join-Path (Split-Path -Parent $dockerBin) "cli-plugins"
+if (-not (Test-Path -LiteralPath (Join-Path $dockerBin "docker.exe"))) {
+  $rancherRoot = "C:\Program Files\Rancher Desktop\resources\resources\win32"
+  $rancherBin = Join-Path $rancherRoot "bin"
+  if (Test-Path -LiteralPath (Join-Path $rancherBin "docker.exe")) {
+    $dockerBin = $rancherBin
+    $dockerPluginDirectory = Join-Path $rancherRoot "docker-cli-plugins"
+    # Rancher Moby exposes the Docker-compatible Windows named pipe. Preserve
+    # an explicitly selected endpoint instead of changing machine settings.
+    if (-not $env:DOCKER_HOST) {
+      $env:DOCKER_HOST = "npipe:////./pipe/docker_engine"
+    }
+  }
+}
 if (Test-Path -LiteralPath (Join-Path $dockerBin "docker.exe")) {
   $pathEntries.Add($dockerBin)
 
-  $dockerPluginDirectory = Join-Path (Split-Path -Parent $dockerBin) "cli-plugins"
   if (Test-Path -LiteralPath $dockerPluginDirectory) {
     $dockerConfigDirectory = Join-Path $toolsRoot "docker-config"
     New-Item -ItemType Directory -Force -Path $dockerConfigDirectory | Out-Null
@@ -118,6 +136,7 @@ $env:Path = [string]::Join(";", $orderedPathEntries)
 
 Write-Verbose "GNU Make: $makeExecutable"
 Write-Verbose "Git Bash: $gitBash"
+Write-Verbose "Node.js: $nodeBin"
 Write-Verbose "JAVA_HOME: $env:JAVA_HOME"
 Write-Verbose "DOCKER_CONFIG: $env:DOCKER_CONFIG"
 

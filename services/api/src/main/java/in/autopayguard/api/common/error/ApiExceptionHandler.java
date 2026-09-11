@@ -221,6 +221,19 @@ public class ApiExceptionHandler {
                                 exception.getMessage()));
     }
 
+    @ExceptionHandler(AccountEnrollmentRequiredException.class)
+    ResponseEntity<ProblemDetail> handleEnrollmentRequired(
+            AccountEnrollmentRequiredException exception) {
+        ProblemDetail problem =
+                problem(
+                        HttpStatus.FORBIDDEN,
+                        NOT_PROVISIONED_TYPE,
+                        "Account enrollment required",
+                        exception.getMessage());
+        problem.setProperty("code", "ACCOUNT_ENROLLMENT_REQUIRED");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
+    }
+
     @ExceptionHandler(RequestConflictException.class)
     ResponseEntity<ProblemDetail> handleRequestConflict(RequestConflictException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)

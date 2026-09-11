@@ -12,6 +12,27 @@ import {
 const id = "00000000-0000-4000-8000-000000000123";
 
 describe("authenticated BFF route policy", () => {
+  it("allows only the exact consent enrollment POST with no query or concurrency headers", () => {
+    const path = "/api/bff/v1/account/enrollment";
+    expect(resolveBffRoute("POST", path, new URLSearchParams())).toEqual({
+      path: "/v1/account/enrollment",
+      search: "",
+    });
+    expect(resolveBffBodyPolicy("POST", path)).toBe("required");
+    expect(resolveBffHeaderPolicy("POST", path)).toEqual({
+      ifMatch: "forbidden",
+      idempotencyKey: "forbidden",
+    });
+    for (const method of ["GET", "PUT", "PATCH", "DELETE"]) {
+      expect(resolveBffRoute(method, path, new URLSearchParams())).toBeNull();
+    }
+    expect(
+      resolveBffRoute("POST", path, new URLSearchParams("role=SUPPORT")),
+    ).toBeNull();
+    expect(
+      resolveBffRoute("POST", `${path}/extra`, new URLSearchParams()),
+    ).toBeNull();
+  });
   it.each([
     ["POST", "/api/bff/v1/imports"],
     ["GET", `/api/bff/v1/imports/${id}`],

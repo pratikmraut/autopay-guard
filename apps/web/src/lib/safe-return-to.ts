@@ -2,6 +2,7 @@ const ALLOWED_RETURN_PATHS = new Set([
   "/dashboard",
   "/dashboard/savings",
   "/onboarding",
+  "/enroll",
   "/more",
   "/household",
   "/commitments",

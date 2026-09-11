@@ -8,6 +8,16 @@ import org.junit.jupiter.api.Test;
 class ProductionIdentityGuardTest {
 
     @Test
+    void rejectsLegacyIssuerFallbackInProduction() {
+        var environment = new org.springframework.mock.env.MockEnvironment();
+        environment.setActiveProfiles("prod");
+        assertThatThrownBy(() -> new ProductionIdentityGuard(
+                new IdentityProperties(false, true, false, "https://former.example.test"), environment))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("explicitly migrated issuer binding");
+    }
+
+    @Test
     void acceptsClosedProductionProvisioning() {
         assertThatNoException()
                 .isThrownBy(() -> ProductionIdentityGuard.validate(false, true, "prod"));

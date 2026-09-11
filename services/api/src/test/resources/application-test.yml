@@ -16,6 +16,8 @@ app:
   identity:
     auto-provision: true
     require-verified-email: false
+    self-registration-enabled: false
+    legacy-issuer-uri: https://issuer.test.example/realms/autopay-guard
   notifications:
     generator-cron: "-"
     worker-cron: "-"

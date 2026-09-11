@@ -61,6 +61,8 @@ app:
   identity:
     auto-provision: false
     require-verified-email: true
+    self-registration-enabled: ${APP_IDENTITY_SELF_REGISTRATION_ENABLED:false}
+    legacy-issuer-uri: ""
   privacy:
     notice-version: ${PRIVACY_NOTICE_VERSION:foundation-v1}
   occurrences:

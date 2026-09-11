@@ -6,7 +6,7 @@ private-beta operation.
 
 ## Preconditions
 
-Use the repository-generated `.env`, Docker Desktop, Bash, Node 22.19, pnpm
+Use the repository-generated `.env`, Docker Desktop, Bash, Node 22.23.2, pnpm
 11.9, Java 21, and the exact five Compose services. Finish the normal baseline
 first:
 

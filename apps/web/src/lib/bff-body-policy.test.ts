@@ -9,6 +9,40 @@ const guideId = "00000000-0000-4000-8000-000000000044";
 const attemptId = "00000000-0000-4000-8000-000000000045";
 
 describe("normalizeBffRequestBody", () => {
+  it("accepts only explicit versioned enrollment consent, never client-supplied identity or role", () => {
+    const path = "/api/bff/v1/account/enrollment";
+    const valid = {
+      ageConfirmed: true,
+      privacyNoticeAccepted: true,
+      privacyNoticeVersion: "foundation-v1",
+    };
+    expect(
+      normalizeBffRequestBody("POST", path, JSON.stringify(valid)).accepted,
+    ).toBe(true);
+    for (const body of [
+      {},
+      { ...valid, ageConfirmed: false },
+      { ...valid, privacyNoticeAccepted: "true" },
+      { ...valid, privacyNoticeVersion: "<bad>" },
+      { ...valid, role: "SUPPORT" },
+      { ...valid, email: "someone@autopayguard.local" },
+      { ...valid, userId: commitmentId },
+    ]) {
+      expect(
+        normalizeBffRequestBody("POST", path, JSON.stringify(body)).accepted,
+      ).toBe(false);
+    }
+    expect(
+      normalizeBffRequestBody(
+        "POST",
+        path,
+        '{"ageConfirmed":false,"ageConfirmed":true,"privacyNoticeAccepted":true,"privacyNoticeVersion":"foundation-v1"}',
+      ).accepted,
+    ).toBe(false);
+    expect(normalizeBffRequestBody("POST", path, undefined).accepted).toBe(
+      false,
+    );
+  });
   it("accepts only exact M5 household mutation bodies", () => {
     const invitation = normalizeBffRequestBody(
       "POST",

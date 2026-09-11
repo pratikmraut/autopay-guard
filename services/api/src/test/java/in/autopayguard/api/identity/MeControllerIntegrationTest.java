@@ -36,7 +36,7 @@ class MeControllerIntegrationTest {
                                                 jwt()
                                                         .jwt(
                                                                 token ->
-                                                                        token.subject("fake-alice")
+                                                                        token.issuer("https://issuer.test.example/realms/autopay-guard").subject("fake-alice")
                                                                                 .claim(
                                                                                         "email",
                                                                                         "  ALICE@EXAMPLE.TEST ")
@@ -63,7 +63,7 @@ class MeControllerIntegrationTest {
                                         jwt()
                                                 .jwt(
                                                         token ->
-                                                                token.subject("fake-alice")
+                                                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject("fake-alice")
                                                                         .claim(
                                                                                 "email",
                                                                                 "alice@example.test")
@@ -82,7 +82,7 @@ class MeControllerIntegrationTest {
                                         jwt()
                                                 .jwt(
                                                         token ->
-                                                                token.subject("fake-no-email")
+                                                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject("fake-no-email")
                                                                         .claim(
                                                                                 "name",
                                                                                 "No Email"))))
@@ -116,7 +116,7 @@ class MeControllerIntegrationTest {
                                         jwt()
                                                 .jwt(
                                                         token ->
-                                                                token.subject("fake-correlation")
+                                                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject("fake-correlation")
                                                                         .claim(
                                                                                 "email",
                                                                                 "correlation@example.test")
@@ -140,7 +140,7 @@ class MeControllerIntegrationTest {
                                                 jwt()
                                                         .jwt(
                                                                 token ->
-                                                                        token.subject(
+                                                                        token.issuer("https://issuer.test.example/realms/autopay-guard").subject(
                                                                                         "fake-correlation")
                                                                                 .claim(
                                                                                         "email",

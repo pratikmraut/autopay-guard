@@ -70,14 +70,15 @@ class PostgresMigrationIT {
     }
 
     @Test
-    void v6MigratesAnEmptyPostgres18Database() throws SQLException {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
+    void v7MigratesAnEmptyPostgres18Database() throws SQLException {
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
 
         try (Connection connection = POSTGRES.createConnection("")) {
             DatabaseMetaData metadata = connection.getMetaData();
             assertThat(metadata.getDatabaseMajorVersion()).isEqualTo(18);
             assertThat(publicDomainTables(metadata))
                     .containsExactlyInAnyOrder(
+                            "account_enrollment_lock",
                             "users",
                             "households",
                             "merchants",
@@ -367,7 +368,7 @@ class PostgresMigrationIT {
                         .load();
         latest.migrate();
 
-        assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("6");
+        assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("7");
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT checksum FROM flyway_schema_history WHERE version = '1'",
@@ -510,7 +511,7 @@ class PostgresMigrationIT {
                         .load();
         latest.migrate();
 
-        assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("6");
+        assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("7");
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT checksum FROM flyway_schema_history WHERE version = '1'",
@@ -679,7 +680,7 @@ class PostgresMigrationIT {
                         .load();
         latest.migrate();
 
-        assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("6");
+        assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("7");
         assertThat(
                         jdbc.query(
                                         """
@@ -894,7 +895,7 @@ class PostgresMigrationIT {
         latest.migrate();
 
         assertThat(latest.info().current().getVersion().getVersion())
-                .isEqualTo("6");
+                .isEqualTo("7");
         assertThat(
                         jdbc.query(
                                         """
@@ -1172,7 +1173,7 @@ class PostgresMigrationIT {
         latest.migrate();
 
         assertThat(latest.info().current().getVersion().getVersion())
-                .isEqualTo("6");
+                .isEqualTo("7");
         assertThat(
                         jdbc.query(
                                         """
@@ -1556,7 +1557,7 @@ class PostgresMigrationIT {
         return jwt()
                 .jwt(
                         token ->
-                                token.subject(subject)
+                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject(subject)
                                         .claim("email", email)
                                         .claim("name", displayName))
                 .authorities(

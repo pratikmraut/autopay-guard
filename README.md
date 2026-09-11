@@ -35,6 +35,22 @@ remain a separate human decision. See [`SECURITY.md`](SECURITY.md) before
 reporting a vulnerability and [`CONTRIBUTING.md`](CONTRIBUTING.md) before
 proposing a change.
 
+## Portfolio demo and private accounts
+
+Open `/demo` for a no-login, browser-memory-only sample workspace. Add, edit,
+archive, search, and reset fictional monthly INR commitments; each tab is
+independent and a refresh restores the sample. It never calls the private API
+or saves financial data. This limited demo is separate from the full app.
+
+The local stack also supports `/signup`, verified Keycloak registration,
+explicit app-account consent, private workspace onboarding, and provider-owned
+password recovery. Local messages are captured by Mailpit, not delivered to
+real inboxes. Use fictional `@autopayguard.local` identities only.
+
+See [the account/demo runbook](docs/PORTFOLIO_ACCOUNTS_AND_DEMO.md) for steps,
+test commands, design decisions, and the separate hosting checklist. These code
+features do **not** make the service production-ready or authorize public signup.
+
 ## Repository layout
 
 ```text
@@ -52,7 +68,7 @@ scripts                 reproducible developer helpers
 - Java 21
 - Node.js 22 (an active supported Node release)
 - pnpm 11.9
-- Docker Desktop with Docker Compose v2
+- Rancher Desktop using the Moby engine, or Docker Desktop, with Compose v2
 - GNU Make
 - Git Bash on Windows for shell scripts
 
@@ -83,7 +99,9 @@ use the repository wrapper instead:
 
 The wrapper uses a project-local Java 21 and GNU Make installation under the
 ignored `.tools` directory when present. It also selects Git Bash, Docker
-Desktop, Node, and pnpm through Corepack without changing the global user PATH.
+Desktop or Rancher Moby, Node, and pnpm through Corepack without changing the
+global user PATH. Rancher's containerd-only mode is not supported by these
+Docker Compose scripts.
 
 The local services are:
 

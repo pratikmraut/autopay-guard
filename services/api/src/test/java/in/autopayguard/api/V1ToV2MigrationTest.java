@@ -80,7 +80,7 @@ class V1ToV2MigrationTest {
                         .load();
         latest.migrate();
 
-        assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("6");
+        assertThat(latest.info().current().getVersion().getVersion()).isEqualTo("7");
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT oidc_subject FROM users WHERE id = ?",
@@ -107,7 +107,7 @@ class V1ToV2MigrationTest {
                                 ORDER BY installed_rank
                                 """,
                                 String.class))
-                .containsExactly("1", "2", "3", "4", "5", "6");
+                .containsExactly("1", "2", "3", "4", "5", "6", "7");
         assertThat(
                         jdbc.queryForObject(
                                 "SELECT count(*) FROM commitment_import_jobs",

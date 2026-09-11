@@ -1,4 +1,96 @@
-# Codex result - PB-G04A/PB-G06 preliminary local hardening
+# Codex result - portfolio accounts and isolated demo
+
+Date: 2026-09-12. Status: local implementation, review and complete fake-data
+acceptance passed. No deployment or real-user processing.
+
+The approved slice adds a no-login memory-only sample workspace, verified
+Keycloak registration, explicit consent-based app enrollment, private workspace
+onboarding, provider-owned recovery, issuer-bound new accounts, local least-
+privilege realm reconciliation, and desktop/mobile integration coverage.
+
+Runbook: `docs/PORTFOLIO_ACCOUNTS_AND_DEMO.md`. Decision: ADR-020. Sanitized source
+publication is authorized to `github.com/pratikmraut/autopay-guard`; Git history
+and the checks attached to the actual commit are the publication/remote-CI
+evidence. Earlier milestone results below are historical, not this candidate's
+acceptance evidence.
+
+### Issues found and addressed during rehearsal
+
+- Real Keycloak forms and Next.js route announcers required correctly scoped
+  browser locators and explicit navigation waits, without weakening assertions.
+- The live recovery test now clears cookies and proves that the previous
+  password fails, the replacement succeeds, and private data is preserved.
+- V7's email uniqueness exposed an older notification test fixture that reused
+  an email for multiple distinct users. Fixtures now use UUID-derived fictional
+  emails; the constraint was not relaxed.
+- A repeated PostgreSQL run exposed a reminder-generation race: a candidate
+  query could acquire row locks after another transaction committed while still
+  returning an older anti-join result. Generation now rechecks the semantic key
+  under those locks with a fresh READ_COMMITTED snapshot. A deterministic stale-
+  candidate replay reproduced the original uniqueness failure before the fix;
+  the notification, delivery and outbox remain one atomic transaction.
+- Disabling new local registration now preserves existing USER authority and
+  recovery, but cannot silently provision an unconsented ordinary identity.
+- Enrollment and privacy deletion share a first database lock to prevent a
+  concurrent deletion from being undone by registration. Real PostgreSQL tests
+  cover this interleaving and concurrent duplicate enrollment.
+- The restore drill now inventories all 53 V7 tables and checks the enrollment
+  singleton. Normal and deliberately failed restore drills both cleaned up their
+  disposable databases and temporary dumps, leaving the canonical data intact.
+- Source secret scanning now fails closed when Git cannot inspect the repository
+  instead of risking an empty source selection on Windows ownership errors.
+- Publication-time dependency auditing identified new upstream advisories.
+  Next.js and its ESLint configuration are now 16.3.3, nanoid is pinned at
+  3.3.18, and sharp at 0.35.4. Frozen installation and a fresh production audit
+  passed with no known vulnerabilities; the running web image reports 16.3.3.
+- The refreshed September 11 vulnerability database also identified Tomcat
+  advisories. The embedded server is pinned to the fixed 11.0.25 patch without
+  changing Spring Boot's major version. Node is pinned to 22.23.2, and the fresh
+  web runtime contains OpenSSL packages 3.5.8-r0. The global Windows Node
+  installation was not changed; the launcher can use the ignored portable
+  project-local runtime.
+- Public CI no longer uploads authentication browser diagnostics. The signup
+  and recovery rehearsal also disables retry traces; generated credentials and
+  action links must not become public test artifacts.
+
+### GitHub configuration note
+
+Read-only inspection of earlier public checks found that Dependency review
+cannot run while the repository's Dependency graph is disabled or unsupported.
+That PR-only configuration issue is not a dependency scan result, and no
+repository setting was changed or security gate suppressed. Earlier CodeQL
+successes are historical; the new source must be judged by its own checks.
+
+### Verification evidence
+
+- Patched backend: 315 Surefire tests and 39 real-PostgreSQL Failsafe tests
+  passed, with zero failures, errors or skips. The notification concurrency
+  methods also passed a separate focused repeat after the full affected class.
+- Patched Node 22.23.2 toolchain: 564 Vitest tests across 66 files, four raw-
+  request-gate tests and nine local-policy/restore-inventory tests passed.
+  Formatting, lint, strict types, contract-generation checks, frozen install and
+  the Next.js 16.3.3 production build passed. Production dependency audit found
+  no known vulnerabilities.
+- September 11 Trivy vulnerability, Java and configuration-check data produced
+  zero HIGH/CRITICAL findings in the source-only repository snapshot and both
+  final application images. This is a scoped automated scan, not an independent
+  penetration test or a production security approval.
+- Final API image: `sha256:7656e745efb7dda49d7f54bbd95e90ec8122e4ebed8078cc7f5feec6a4e3b0b2`.
+  Final web image: `sha256:caebd718fc572d47930711ada8bedbddd330e6dc336bbd9dd8899df7ed473b3c`.
+- The mobile demo and desktop signup screens were visually inspected; local-
+  only boundaries and working sample controls remain visible and readable.
+- The complete post-patch `.\make.ps1 check` exited 0. Gitleaks found no leaks;
+  Playwright passed 30 desktop/mobile cases in 9.4 minutes. Six existing guarded
+  M5/M6 live cases were intentionally skipped in the standard matrix; they are
+  not claimed as rerun or passed here. Both new signup/recovery cases and all
+  four isolated-demo cases ran and passed, with accessibility and isolation
+  assertions intact.
+- New-account journeys used only generated fictional local identities and
+  Mailpit messages. They verified explicit enrollment, private workspace
+  isolation, old-password denial, replacement-password login, retained account
+  data and cleanup through the actual privacy workflow. No real email was sent.
+
+## Historical result - PB-G04A/PB-G06 preliminary local hardening (2026-08-09)
 
 Status: **bounded fake-data-only implementation and rehearsal passed;
 PB-G04A and PB-G06 remain BLOCKED; Private Beta execution is NO-GO**

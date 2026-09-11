@@ -507,7 +507,7 @@ class NotificationConfigurationApiIntegrationTest {
         return jwt()
                 .jwt(
                         token ->
-                                token.subject(subject)
+                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject(subject)
                                         .claim("email", subject + "@example.test")
                                         .claim("name", subject))
                 .authorities(

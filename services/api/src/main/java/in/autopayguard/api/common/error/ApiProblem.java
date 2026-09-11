@@ -21,4 +21,5 @@ public record ApiProblem(
                         requiredMode = Schema.RequiredMode.REQUIRED)
                 String detail,
         @Schema(nullable = true, example = "web-request-123") String correlationId,
-        @Schema(nullable = true) Map<String, String> errors) {}
+        @Schema(nullable = true) Map<String, String> errors,
+        @Schema(nullable = true, example = "ACCOUNT_ENROLLMENT_REQUIRED") String code) {}

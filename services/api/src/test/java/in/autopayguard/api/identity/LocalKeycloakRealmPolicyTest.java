@@ -28,12 +28,17 @@ class LocalKeycloakRealmPolicyTest {
     private final JsonNode realm = readRealmFixture();
 
     @Test
-    void localRealmRejectsPublicRegistrationAndUnsafeGrantFlows() {
+    void localRealmSupportsVerifiedFakeSignupWithoutUnsafeGrantFlows() {
         assertThat(realm.path("realm").asString()).isEqualTo("autopay-guard");
         assertThat(realm.path("enabled").asBoolean()).isTrue();
-        assertThat(realm.path("registrationAllowed").asBoolean()).isFalse();
+        assertThat(realm.path("registrationAllowed").asBoolean()).isTrue();
+        assertThat(realm.path("registrationEmailAsUsername").asBoolean()).isTrue();
+        assertThat(realm.path("verifyEmail").asBoolean()).isTrue();
         assertThat(realm.path("rememberMe").asBoolean()).isFalse();
-        assertThat(realm.path("resetPasswordAllowed").asBoolean()).isFalse();
+        assertThat(realm.path("resetPasswordAllowed").asBoolean()).isTrue();
+        assertThat(realm.path("smtpServer").path("host").asString()).isEqualTo("mailpit");
+        assertThat(realm.path("smtpServer").path("port").asString()).isEqualTo("1025");
+        assertThat(realm.path("passwordPolicy").asString()).isEqualTo("length(12)");
         assertThat(realm.path("duplicateEmailsAllowed").asBoolean()).isFalse();
         assertThat(realm.path("editUsernameAllowed").asBoolean()).isFalse();
         assertThat(realm.path("bruteForceProtected").asBoolean()).isTrue();
@@ -111,6 +116,15 @@ class LocalKeycloakRealmPolicyTest {
                         "PRIVACY_ADMIN",
                         "AUDIT_READ",
                         "SUPPORT_READ");
+        assertThat(realm.path("defaultRole").path("name").asString())
+                .isEqualTo("default-roles-autopay-guard");
+        assertThat(realm.path("roles").path("realm").size()).isOne();
+        JsonNode defaultRole = realm.path("roles").path("realm").get(0);
+        assertThat(defaultRole.path("name").asString()).isEqualTo("default-roles-autopay-guard");
+        assertThat(defaultRole.path("composite").asBoolean()).isTrue();
+        assertThat(defaultRole.path("composites").path("client").size()).isOne();
+        assertThat(textValues(defaultRole.path("composites").path("client").path(API_CLIENT_ID)))
+                .containsExactly("USER");
     }
 
     @Test

@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
 import { TrustBanner } from "@/components/trust-banner";
+import { getServerEnvironment } from "@/lib/env";
+
+export const dynamic = "force-dynamic";
 
 const controls = [
   {
@@ -22,6 +25,8 @@ const controls = [
 ] as const;
 
 export default function HomePage() {
+  const registrationEnabled =
+    getServerEnvironment().AUTH_SELF_REGISTRATION_ENABLED === "true";
   return (
     <div className="public-page">
       <header className="public-header">
@@ -30,6 +35,11 @@ export default function HomePage() {
           <Link className="nav-text-link" href="/privacy">
             Privacy
           </Link>
+          {registrationEnabled && (
+            <Link className="nav-text-link" href="/signup">
+              Create account
+            </Link>
+          )}
           <Link className="primary-link" href="/signin">
             Sign in
           </Link>
@@ -49,16 +59,22 @@ export default function HomePage() {
               keep a clear record of every action.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link className="primary-link primary-link--large" href="/signin">
-                Open your control room
+              <Link className="primary-link primary-link--large" href="/demo">
+                Try the demo
                 <span aria-hidden="true">→</span>
               </Link>
-              <Link className="secondary-link" href="/privacy">
-                Read our privacy promise
+              <Link
+                className="secondary-link"
+                href={registrationEnabled ? "/signup" : "/signin"}
+              >
+                {registrationEnabled
+                  ? "Create your private account"
+                  : "Sign in to your account"}
               </Link>
             </div>
             <p className="mt-5 text-sm leading-6 text-slate-500">
-              For adults 18+ in India. AutoPay Guard does not initiate payments.
+              Demo uses fictional data in your browser tab, with no shared
+              login. For adults 18+. AutoPay Guard does not initiate payments.
             </p>
           </div>
 
@@ -112,7 +128,9 @@ export default function HomePage() {
       </main>
 
       <footer className="public-footer">
-        <p>AutoPay Guard is a working name for a private beta product.</p>
+        <p>
+          AutoPay Guard · Portfolio demonstration and local account rehearsal.
+        </p>
         <p>Built for clarity, consent, and user control.</p>
       </footer>
     </div>

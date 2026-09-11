@@ -13,8 +13,8 @@ require_command java
 require_command docker
 
 node_version="$(node --version)"
-[[ "${node_version}" == v22.19.* ]] ||
-  die "Node.js 22.19.x is required; found ${node_version}."
+[[ "${node_version}" == v22.23.2 ]] ||
+  die "Node.js 22.23.2 is required; found ${node_version}."
 
 pnpm_version="$(pnpm --version)"
 [[ "${pnpm_version}" == 11.9.* ]] ||
@@ -82,6 +82,7 @@ MAILPIT_UI_PORT=8025
 API_PORT=8080
 WEB_PORT=3000
 AUTOPAY_GUARD_RUNTIME_MODE=LOCAL
+LOCAL_SELF_REGISTRATION_ENABLED=true
 POSTGRES_DB=autopay_guard
 POSTGRES_USER=autopay_guard_admin
 POSTGRES_PASSWORD=${postgres_password}
@@ -139,6 +140,9 @@ else
   append_env_value_if_missing \
     AUTOPAY_GUARD_RUNTIME_MODE \
     "LOCAL"
+  append_env_value_if_missing \
+    LOCAL_SELF_REGISTRATION_ENABLED \
+    "true"
   append_env_value_if_missing \
     KEYCLOAK_FAKE_MEMBER_USERNAME \
     "member@autopayguard.local"

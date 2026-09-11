@@ -16,6 +16,7 @@ frontend_lint() {
 
 all_tests() {
   require_command pnpm
+  node --test scripts/local-account-policy.test.mjs scripts/m6-restore-inventory.test.mjs
   run_maven --batch-mode --no-transfer-progress verify
   pnpm test
 }
@@ -27,11 +28,16 @@ e2e() {
   export E2E_USER_PASSWORD="${KEYCLOAK_FAKE_USER_PASSWORD}"
   export AUTH_KEYCLOAK_ID="${KEYCLOAK_WEB_CLIENT_ID:-autopay-guard-web}"
   export AUTH_KEYCLOAK_SECRET="${KEYCLOAK_WEB_CLIENT_SECRET}"
+  export AUTH_SELF_REGISTRATION_ENABLED="${LOCAL_SELF_REGISTRATION_ENABLED:-true}"
   PLAYWRIGHT_TEST=true pnpm e2e
 }
 
 secret_scan() {
   if command -v gitleaks >/dev/null 2>&1; then
+    # Refuse a scan that would silently omit source when Git cannot inspect the
+    # repository (for example, a different Windows process owner).
+    git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null ||
+      die "Cannot inspect repository source for the secret scan."
     local scan_root source_path target_path scan_status
     scan_root="$(mktemp -d)"
 

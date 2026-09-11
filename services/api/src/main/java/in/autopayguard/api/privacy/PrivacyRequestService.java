@@ -256,6 +256,10 @@ public class PrivacyRequestService {
             UUID requestId,
             long expectedVersion,
             String idempotencyKey) {
+        // Same first lock as explicit enrollment, before any user/request lock.
+        // Deletion cannot commit between enrollment's tombstone check and insert.
+        jdbcTemplate.queryForObject(
+                "SELECT id FROM account_enrollment_lock WHERE id = 1 FOR UPDATE", Integer.class);
         CurrentUser administrator = currentUserService.resolve(jwt);
         Claim claim =
                 idempotencyService.begin(

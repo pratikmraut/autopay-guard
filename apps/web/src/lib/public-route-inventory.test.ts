@@ -7,12 +7,29 @@ const appRoot = join(process.cwd(), "src", "app");
 describe("public route inventory", () => {
   it("keeps every page and route outside the authenticated group explicit", () => {
     expect(discoverPublicRouteFiles(appRoot)).toEqual([
+      "account/continue/page.tsx",
       "api/auth/[...nextauth]/route.ts",
       "api/bff/[...path]/route.ts",
+      "demo/page.tsx",
       "page.tsx",
       "privacy/page.tsx",
       "signin/page.tsx",
+      "signup/page.tsx",
     ]);
+  });
+
+  it("keeps the OIDC continuation authenticated and enrollment inside the session boundary", () => {
+    const continuation = readFileSync(
+      join(appRoot, "account", "continue", "page.tsx"),
+      "utf8",
+    );
+    const enrollment = readFileSync(
+      join(appRoot, "(authenticated)", "enroll", "page.tsx"),
+      "utf8",
+    );
+    expect(continuation).toMatch(/await\s+requireSessionUser\s*\(/);
+    expect(enrollment).toMatch(/await\s+requireAppRole\s*\("USER"/);
+    expect(enrollment).toContain("AUTH_SELF_REGISTRATION_ENABLED");
   });
 
   it("keeps the authenticated route-group layout fail-closed", () => {

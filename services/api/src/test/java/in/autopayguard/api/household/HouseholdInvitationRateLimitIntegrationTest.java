@@ -183,7 +183,7 @@ class HouseholdInvitationRateLimitIntegrationTest {
         return jwt()
                 .jwt(
                         token ->
-                                token.subject(SUBJECT)
+                                token.issuer("https://issuer.test.example/realms/autopay-guard").subject(SUBJECT)
                                         .claim("email", EMAIL)
                                         .claim(
                                                 "name",

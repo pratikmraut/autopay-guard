@@ -2,6 +2,9 @@ app:
   identity:
     # Development only: a valid fake Keycloak identity is mapped on first API use.
     auto-provision: true
+    # Only this already-known local fixture issuer may access unbound pre-V7 rows.
+    # V7 never guesses or backfills the issuer of existing accounts.
+    legacy-issuer-uri: http://localhost:8081/realms/autopay-guard
   notifications:
     generator-cron: ${NOTIFICATION_GENERATOR_CRON:0 */1 * * * *}
     worker-cron: ${NOTIFICATION_WORKER_CRON:*/5 * * * * *}

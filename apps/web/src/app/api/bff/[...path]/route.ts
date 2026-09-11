@@ -66,6 +66,21 @@ const authenticatedHandler = auth(async (request) => {
   }
 
   const environment = getServerEnvironment();
+  if (route.path === "/v1/account/enrollment") {
+    if (environment.AUTH_SELF_REGISTRATION_ENABLED !== "true") {
+      return problem(
+        404,
+        "Not Found",
+        "Account registration is not available.",
+      );
+    }
+    if (
+      request.auth.appRoles?.length !== 1 ||
+      request.auth.appRoles[0] !== "USER"
+    ) {
+      return problem(403, "Forbidden", "This account cannot self-register.");
+    }
+  }
   if (
     request.method !== "GET" &&
     !isExpectedRequestOrigin(

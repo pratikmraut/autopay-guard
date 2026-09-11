@@ -131,7 +131,7 @@ class SupportGrantExpiryServiceTest {
                                             jwt()
                                                     .jwt(
                                                             token ->
-                                                                    token.subject(
+                                                                    token.issuer("https://issuer.test.example/realms/autopay-guard").subject(
                                                                                     "support-expiry-reader")
                                                                             .claim(
                                                                                     "email",
@@ -193,7 +193,7 @@ class SupportGrantExpiryServiceTest {
                                                 jwt()
                                                         .jwt(
                                                                 token ->
-                                                                        token.subject(subject)
+                                                                        token.issuer("https://issuer.test.example/realms/autopay-guard").subject(subject)
                                                                                 .claim(
                                                                                         "email",
                                                                                         "support-invalid-code-reader@example.test")
@@ -222,7 +222,7 @@ class SupportGrantExpiryServiceTest {
                                             jwt()
                                                     .jwt(
                                                             token ->
-                                                                    token.subject(subject)
+                                                                    token.issuer("https://issuer.test.example/realms/autopay-guard").subject(subject)
                                                                             .claim(
                                                                                     "email",
                                                                                     "support-invalid-code-reader@example.test")

@@ -1,59 +1,51 @@
-# Current task: public source baseline and remote evidence
+# Next task: hosting design and explicit deployment scope
 
-Status: **sanitized public source publication is authorized. Website deployment
-and Private Beta execution remain NO-GO.** PB-G04A and PB-G06 remain BLOCKED.
+Status: portfolio implementation, review and complete local acceptance passed.
+Sanitized public-source publication is authorized; use the Git history and
+checks on the actual commit for publication/remote-CI evidence. Website
+deployment and real-user signup remain separate, unexecuted work.
 
-## Completed bounded work
+## Authorized scope
 
-- Added early API production-boundary rejection for implicit provisioning,
-  disabled verified-email enforcement, insecure identity/JWK destinations,
-  client/audience drift, excess egress origins, development email/probes/docs,
-  excess management/error/schema behavior and shared configured database
-  usernames.
-- Pinned existing users to their immutable local subject and provisioned email,
-  preserved tombstone denial, and allowed only display-name synchronization.
-- Made API and web role extraction fail closed unless the API-client mapping is
-  exactly one allowlisted role; pinned token `aud` and `azp`.
-- Tightened the fake-local Keycloak fixture and live reconciliation for closed
-  registration, safe grant/callback/origin posture and exact identity roles.
-- Added explicit web LOCAL/PRODUCTION mode validation, production HSTS, exact
-  declared outbound origins, redirect rejection for web-owned dependency
-  requests, and structural route/public-endpoint inventories.
-- Focused review passed 45 API and 39 web tests plus type, lint, format, script
-  syntax and realm JSON checks. The rebuilt fake stack/seed and complete
-  delivery gate passed: 301 Surefire, 29 Failsafe, four raw-request-gate and 488
-  Vitest tests, clean audit/secret/build checks, and Playwright 24 passed / six
-  guarded skipped. Final parity covered 693 source files with zero differences.
+The user requested account-creation and demo code changes, documentation, and a
+GitHub commit/push before hosting. Test only fictional local identities. Preserve
+the OIDC BFF, exact money, workspace isolation, deletion denial, and narrow roles.
 
-## Current verdict
+## Implemented
 
-The local slice is PRELIMINARY/PARTIAL and ready for human review. It does not
-satisfy either gate and is not candidate, environment, deployment or Private
-Beta evidence.
+- No-login `/demo`: per-tab memory only, monthly INR sample commitments, exact
+  projections, add/edit/archive/search/reset; no private API or storage calls.
+- `/signup` delegates credentials, verification, and recovery to Keycloak.
+- Explicit authenticated enrollment records age/current-notice acceptance;
+  reads never enroll a new ordinary local user. New accounts are issuer-bound.
+- Local realm reconciliation enables captured-email rehearsal, default USER
+  authority, and independent staff roles. Closing signup preserves existing
+  account access/recovery. Flags default off outside local orchestration.
+- V7 migration, API contract, regression tests, live browser coverage, runbook,
+  and ADR-020.
 
-PB-G04A remains blocked by issuer-aware `(iss, sub)` persistence/migration,
-reversible disablement, live session/token revocation, staff MFA, recovery,
-break-glass, offboarding, an approved real IdP and named owners.
+## Completed local gate
 
-PB-G06 remains blocked by deployment-level mode pinning, network-enforced
-egress and framework redirect/DNS evidence, actual database grants/object
-owners and an isolated migration credential, plus an approved India-region
-TLS/ingress/edge/WAF/private-network/secrets/KMS/backup/cost design with named
-owners.
+The complete post-patch `make check` exited 0: 315 Surefire, 39 PostgreSQL,
+564 Vitest, four raw-request, nine script and 30 browser tests passed; six
+existing guarded browser cases were intentionally skipped. Signup/recovery
+and cross-workspace negative tests ran on desktop and mobile. Dependency,
+source-secret and refreshed application-image/source security scans passed.
+Normal and forced-failure restore rehearsals preserved the canonical fake data.
+Detailed evidence is recorded in `CODEX_RESULT.md`. Remote checks remain a
+separate gate on the actual published commit, not an inferred local result.
 
 ## Next human gate
 
-Publish the sanitized initial source candidate, review all remote GitHub
-security/quality results, protect `main`, and record the immutable commit. Then
-review PB-G04A/PB-G06 and either accept the bounded preliminary result, request
-revisions, pause, or authorize a different fake-only readiness slice.
+Review the delivered source and separately approve a hosting design. A public
+demo-only release and a service storing real users' information are different
+decisions. The latter still needs approved/versioned privacy notices, real IdP
+and email operations, legacy issuer migration, abuse controls, session
+revocation/MFA/ownership, database least privilege, TLS/ingress, backups/restore,
+monitoring, secrets, capacity/cost limits, and the outstanding beta gates.
 
 ## Boundary
 
-The public Git commit/remote/push and repository-triggered CI are authorized.
-Do not deploy a website, enable public signup, select or purchase vendors,
-configure a real IdP/email/domain, publish real merchant guides, create shared/
-staging/production/cloud resources, identify/invite adults, process real
-personal/financial data, or change external network/database grants. Do not add
-bank/card/UPI/Account Aggregator/SMS/inbox access, payment or mandate action,
-binary evidence, provider contact, minors, or automated financial advice.
+Do not deploy, configure real vendors or email, invite real people, access real
+personal/financial data, or expose local Compose to the internet. No payment,
+bank/card/UPI/SMS/inbox access, provider actions, or financial advice.

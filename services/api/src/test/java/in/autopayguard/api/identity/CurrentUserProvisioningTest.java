@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import in.autopayguard.api.common.error.IdentityClaimsException;
 import in.autopayguard.api.common.error.LocalUserNotProvisionedException;
 import in.autopayguard.api.common.security.OpaqueCodes;
+import in.autopayguard.api.common.security.SecurityProperties;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -24,6 +25,38 @@ class CurrentUserProvisioningTest {
     private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
     private static final String TOMBSTONE_DOMAIN =
             "autopay-guard/deletion-tombstone/v1:";
+
+    @Test
+    void closingLocalEnrollmentCannotImplicitlyCreatePreviouslyRegisteredProviderIdentity() {
+        UserRepository repository = mock(UserRepository.class);
+        String issuer = "http://localhost:8081/realms/autopay-guard";
+        CurrentUserService service = new CurrentUserService(repository, CLOCK,
+                new IdentityProperties(true, true, false, issuer),
+                new SecurityProperties(issuer, null, "autopay-guard-api", "autopay-guard-web"));
+        Jwt token = Jwt.withTokenValue("fake").header("alg", "none").issuer(issuer)
+                .subject("random-signup-subject").claim("email", "random@example.test")
+                .claim("name", "Random Signup").claim("email_verified", true)
+                .claim("resource_access", java.util.Map.of("autopay-guard-api",
+                        java.util.Map.of("roles", java.util.List.of("USER")))).build();
+        assertThatThrownBy(() -> service.resolve(token)).isInstanceOf(LocalUserNotProvisionedException.class);
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void closingEnrollmentDoesNotBlockAnAlreadyBoundAccount() {
+        UserRepository repository = mock(UserRepository.class);
+        String issuer = "http://localhost:8081/realms/autopay-guard";
+        UserEntity existing = UserEntity.createBound(issuer, "enrolled-subject", "existing@example.test", "Existing", NOW);
+        when(repository.findByOidcSubject("enrolled-subject")).thenReturn(Optional.of(existing));
+        when(repository.saveAndFlush(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        CurrentUserService service = new CurrentUserService(repository, CLOCK,
+                new IdentityProperties(true, true, false, issuer),
+                new SecurityProperties(issuer, null, "autopay-guard-api", "autopay-guard-web"));
+        Jwt token = Jwt.withTokenValue("fake").header("alg", "none").issuer(issuer)
+                .subject("enrolled-subject").claim("email", "existing@example.test")
+                .claim("name", "Existing").claim("email_verified", true).build();
+        assertThat(service.resolve(token).id()).isEqualTo(existing.toCurrentUser().id());
+    }
 
     @Test
     void productionDefaultDoesNotImplicitlyProvisionTokenSubjects() {
@@ -204,12 +237,16 @@ class CurrentUserProvisioningTest {
         return new CurrentUserService(
                 repository,
                 CLOCK,
-                new IdentityProperties(autoProvision, requireVerifiedEmail));
+                new IdentityProperties(autoProvision, requireVerifiedEmail, false,
+                        "https://issuer.test.example/realms/autopay-guard"),
+                new SecurityProperties("https://issuer.test.example/realms/autopay-guard",
+                        null, "autopay-guard-api", "autopay-guard-web"));
     }
 
     private static Jwt jwt(String subject, String email, String name) {
         return Jwt.withTokenValue("fake")
                 .header("alg", "none")
+                .issuer("https://issuer.test.example/realms/autopay-guard")
                 .subject(subject)
                 .claim("email", email)
                 .claim("name", name)
@@ -220,6 +257,7 @@ class CurrentUserProvisioningTest {
             String subject, String email, String name, boolean emailVerified) {
         return Jwt.withTokenValue("fake")
                 .header("alg", "none")
+                .issuer("https://issuer.test.example/realms/autopay-guard")
                 .subject(subject)
                 .claim("email", email)
                 .claim("email_verified", emailVerified)

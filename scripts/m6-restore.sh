@@ -15,6 +15,10 @@ require_command sha256sum
 load_local_env
 m6_require_environment
 
+# The M6 drill now validates the current additive application schema, including
+# the singleton enrollment lock introduced by the portfolio account slice.
+readonly restore_required_schema_version="7"
+
 m6_internal_drill="false"
 m6_parent_lock_directory=""
 if [[ "$#" -eq 1 && "$1" == "--internal-drill" ]]; then
@@ -60,7 +64,8 @@ m6_canonical_safety_signature() {
           )
           AND status = 'ACTIVE') || '|' ||
         (SELECT COUNT(*) FROM flyway_schema_history
-          WHERE version = '6' AND success) || '|' ||
+          WHERE version = '${restore_required_schema_version}' AND success) || '|' ||
+        (SELECT COUNT(*) FROM account_enrollment_lock WHERE id = 1) || '|' ||
         (SELECT COUNT(*) FROM commitment_import_jobs) || '|' ||
         (SELECT COUNT(*) FROM commitment_import_items) || '|' ||
         (SELECT COUNT(*) FROM commitment_import_item_errors) || '|' ||
@@ -96,7 +101,7 @@ if [[ "${m6_internal_drill}" != "true" ]]; then
 
   canonical_safety_before="$(m6_canonical_safety_signature)"
   [[ "${canonical_safety_before}" == \
-    "autopay_guard|8|4|1|0|0|0|0|0|0|0|0" ]] ||
+    "autopay_guard|8|4|1|1|0|0|0|0|0|0|0|0" ]] ||
     die "The canonical database is not the exact clean fake-local restore baseline."
 
   info "Running the normal disposable restore drill."
@@ -239,6 +244,7 @@ validate_restore_database_name "${restore_database}"
 
 readonly allowlisted_tables=(
   users
+  account_enrollment_lock
   households
   merchants
   merchant_aliases
@@ -393,12 +399,12 @@ m6_control_residue="$(
 
 canonical_counts="$(count_snapshot "${M6_CANONICAL_DATABASE}")"
 canonical_migrations="$(migration_snapshot "${M6_CANONICAL_DATABASE}")"
-v6_migration_count="$(
+required_migration_count="$(
   canonical_scalar \
-    "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '6' AND success;"
+    "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '${restore_required_schema_version}' AND success;"
 )"
-[[ "${v6_migration_count}" == "1" ]] ||
-  die "The canonical database does not contain one successful V6 migration."
+[[ "${required_migration_count}" == "1" ]] ||
+  die "The canonical database does not contain one successful V${restore_required_schema_version} migration."
 
 info "Creating a read-only logical dump of the canonical fake-local database."
 postgres_admin pg_dump \
