@@ -145,6 +145,19 @@ authorization to expose the local Compose stack.
 
 ## Remaining verification and deployment limits
 
+The initial published candidate is draft PR #24, commit `6b57b0f`. Remote Maven,
+frontend, both application-image builds/scans, Gitleaks, repository Trivy and
+Mailpit scanning passed. The PostgreSQL/Keycloak failures match the documented
+upstream findings. Dependency review reports an unavailable Dependency Graph;
+this configuration gate remains open rather than being disabled.
+
+GitGuardian's two reported secrets point to one deliberately fictional Basic
+header in the negative authentication test, not a usable provider credential.
+The test now generates ephemeral non-enrolled values; the rejection assertions
+are unchanged. A new CodeQL check/reopen alert in the lock test is addressed
+using one FileHandle. Neither scanner was suppressed or remotely dismissed.
+Re-check the follow-up commit before claiming either remote alert is closed.
+
 Windows Testcontainers could not connect, so 39 PostgreSQL integration cases
 were skipped. The combined local gate passed with 32 browser cases and eight
 explicit skips; final Java patches received a separate fresh Maven verify and

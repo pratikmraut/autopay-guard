@@ -13,6 +13,7 @@ import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -92,8 +93,11 @@ class HeaderOnlyBearerAuthenticationIntegrationTest {
 
     @Test
     void basicAuthorizationCannotAuthenticate() throws Exception {
+        // Fictional, per-test credentials: never enrolled, stored, or tied to a real account.
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBasicAuth("unenrolled-" + UUID.randomUUID(), UUID.randomUUID().toString());
         mockMvc.perform(get("/v1/me")
-                        .header(HttpHeaders.AUTHORIZATION, "Basic Zml4dHVyZTpmaXh0dXJl"))
+                        .headers(headers))
                 .andExpect(status().isUnauthorized());
         verifyNoInteractions(decoder, currentUserService);
     }

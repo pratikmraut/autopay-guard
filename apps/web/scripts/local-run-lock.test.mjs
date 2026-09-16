@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   mkdtemp,
+  open,
   readFile,
   readdir,
   rmdir,
@@ -39,13 +40,21 @@ test("uses an atomically created private directory and an owner-only lock file",
   const privateDirectory = join(root, privateName);
   const privateStat = await stat(privateDirectory);
   const ownerStat = await stat(join(privateDirectory, "owner.json"));
-  const lockStat = await stat(lockPath);
-  assert.equal(ownerStat.ino, lockStat.ino);
-  assert.equal(ownerStat.nlink, 2);
-  assert.equal(JSON.parse(await readFile(lockPath, "utf8")).pid, process.pid);
-  if (process.platform !== "win32") {
-    assert.equal(privateStat.mode & 0o777, 0o700);
-    assert.equal(ownerStat.mode & 0o777, 0o600);
+  const lockHandle = await open(lockPath, "r");
+  try {
+    const lockStat = await lockHandle.stat();
+    assert.equal(ownerStat.ino, lockStat.ino);
+    assert.equal(ownerStat.nlink, 2);
+    assert.equal(
+      JSON.parse(await lockHandle.readFile("utf8")).pid,
+      process.pid,
+    );
+    if (process.platform !== "win32") {
+      assert.equal(privateStat.mode & 0o777, 0o700);
+      assert.equal(ownerStat.mode & 0o777, 0o600);
+    }
+  } finally {
+    await lockHandle.close();
   }
   await release();
   await release();

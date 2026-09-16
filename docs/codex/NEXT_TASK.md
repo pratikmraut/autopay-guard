@@ -19,6 +19,11 @@ Keycloak retain documented upstream image findings; do not disable their new
 fail-closed gates or silently dismiss alerts. A future vendor update or explicit
 evidence-based disposition is needed before any hosting decision.
 
+Draft PR #24 contains this work. Re-check CodeQL/GitGuardian after the test-only
+follow-up fixes and investigate/enable Dependency Graph with appropriate
+repository-settings authority. Its missing feature currently prevents the
+dependency-review job from running. No warning has been silently dismissed.
+
 The source can be pushed on the existing `codex/portfolio-accounts-demo` branch
 with a reviewable PR. Remote CI/security findings on that commit remain separate
 from local results; do not disable a check to merge. Staff roles and reserved

@@ -87,6 +87,37 @@ Detailed findings: `docs/security/SECURITY_REVIEW_2026-09-16.md`.
 The loopback-only stack, Mailpit and generated local password must not be
 exposed publicly. Sanitized source publication is not deployment approval.
 
+## Publication and remote security checks
+
+Published the initial reviewed commit `6b57b0f` to
+`codex/portfolio-accounts-demo` and opened draft PR #24. Main is unchanged;
+there is no merge or deployment. A post-commit Gitleaks scan of 18 reachable
+commits (5.61 MB) found no detected leaks.
+
+The initial PR's Maven, frontend, both clean Dockerfile builds/image scans,
+repository Trivy, Mailpit image and Gitleaks jobs passed. Thus the earlier local
+cached-runtime packaging limitation now has independent fresh CI build evidence
+for that commit. Real-OIDC remote browser testing was still running at inspection.
+
+The remote checks also exposed two follow-up test-fixture improvements:
+
+- GitGuardian matched the static fictional Basic-auth rejection fixture twice
+  (plain/basic and base64 detectors). It was never an enrolled or usable account
+  credential. The test now creates ephemeral random values, still asserting 401
+  and no identity/decoder interactions. No real credential reset or history
+  rewriting was performed; no warning was silently dismissed. All eleven
+  focused authentication tests passed after the fixture change.
+- CodeQL flagged a check/reopen pattern in the new lock test. One FileHandle now
+  supplies both metadata and content, with guaranteed close. Five focused tests,
+  scoped lint and formatting passed. This follow-up changes tests, not runtime.
+
+These fixes require fresh remote check results on the follow-up commit before
+claiming alert closure. Dependency-review CI reports that the repository's
+Dependency Graph is unavailable; that is a repository configuration gate,
+not an additional package finding. PostgreSQL/Keycloak image gates fail on the
+documented upstream findings. Main protection still requires explicit approval.
+Keep the PR draft and do not bypass failing checks to merge or host it.
+
 ---
 
 # Historical result - branded local login and existing demo shortcut
