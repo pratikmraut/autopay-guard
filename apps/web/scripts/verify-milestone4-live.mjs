@@ -1,6 +1,6 @@
 import { chromium } from "@playwright/test";
-import { open, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile } from "node:fs/promises";
+import { acquireLocalRunLock } from "./local-run-lock.mjs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,10 +19,6 @@ const fixturePath = join(
   "local",
   "fixtures",
   "milestone4.json",
-);
-const lockPath = join(
-  tmpdir(),
-  "autopay-guard-milestone4-live-acceptance.lock",
 );
 const baseUrl = "http://localhost:3000";
 
@@ -1140,33 +1136,5 @@ function addDays(localDate, days) {
 }
 
 async function acquireLock() {
-  const token = crypto.randomUUID();
-  let handle;
-  try {
-    handle = await open(lockPath, "wx");
-  } catch (error) {
-    if (error?.code === "EEXIST") {
-      throw new Error(
-        `Another M4 live verifier may be running. After checking processes, remove the stale lock at ${lockPath}.`,
-      );
-    }
-    throw error;
-  }
-  await handle.writeFile(
-    JSON.stringify({
-      token,
-      pid: process.pid,
-      startedAt: new Date().toISOString(),
-    }),
-  );
-  await handle.close();
-  return async () => {
-    const current = await readFile(lockPath, "utf8").catch(() => null);
-    if (current) {
-      const owner = JSON.parse(current);
-      if (owner.token === token) {
-        await rm(lockPath, { force: true });
-      }
-    }
-  };
+  return acquireLocalRunLock("autopay-guard-milestone4-live-acceptance.lock");
 }

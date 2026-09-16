@@ -82,7 +82,7 @@ MAILPIT_UI_PORT=8025
 API_PORT=8080
 WEB_PORT=3000
 AUTOPAY_GUARD_RUNTIME_MODE=LOCAL
-LOCAL_SELF_REGISTRATION_ENABLED=true
+LOCAL_SELF_REGISTRATION_ENABLED=false
 POSTGRES_DB=autopay_guard
 POSTGRES_USER=autopay_guard_admin
 POSTGRES_PASSWORD=${postgres_password}
@@ -142,7 +142,7 @@ else
     "LOCAL"
   append_env_value_if_missing \
     LOCAL_SELF_REGISTRATION_ENABLED \
-    "true"
+    "false"
   append_env_value_if_missing \
     KEYCLOAK_FAKE_MEMBER_USERNAME \
     "member@autopayguard.local"

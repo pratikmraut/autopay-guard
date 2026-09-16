@@ -3,6 +3,9 @@ packages:
   - packages/*
 
 overrides:
+  "brace-expansion@<2": 1.1.18
+  "brace-expansion@>=4 <5.0.9": 5.0.9
+  "js-yaml@>=4 <4.3.2": 4.3.2
   nanoid: 3.3.18
   postcss: 8.5.23
   sharp: 0.35.4

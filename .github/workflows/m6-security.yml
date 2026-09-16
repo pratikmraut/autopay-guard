@@ -63,7 +63,7 @@ jobs:
           scan-ref: .
           scanners: vuln,misconfig,secret
           vuln-type: os,library
-          severity: HIGH,CRITICAL
+          severity: MEDIUM,HIGH,CRITICAL
           ignore-unfixed: false
           hide-progress: true
           format: table
@@ -117,6 +117,54 @@ jobs:
         with:
           scan-type: image
           image-ref: autopay-guard-${{ matrix.name }}:m6-${{ github.sha }}
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          hide-progress: true
+          format: table
+          exit-code: "1"
+
+  infrastructure:
+    name: Local infrastructure image gate (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [postgres, keycloak, mailpit]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Resolve the checked-in service image without loading local secrets
+        id: image
+        env:
+          SERVICE: ${{ matrix.service }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          service = os.environ["SERVICE"]
+          if service not in {"postgres", "keycloak", "mailpit"}:
+              raise SystemExit("Unexpected infrastructure service")
+          source = Path("compose.yaml").read_text(encoding="utf-8")
+          matches = re.findall(r"^  " + service + r":\n    image: ([a-z0-9./:_-]+)\s*$", source, re.M)
+          if len(matches) != 1:
+              raise SystemExit("Expected exactly one pinned service image")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("reference=" + matches[0] + "\n")
+          PY
+
+      - name: Reject high or critical infrastructure-image findings
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ steps.image.outputs.reference }}
           scanners: vuln
           vuln-type: os,library
           severity: HIGH,CRITICAL

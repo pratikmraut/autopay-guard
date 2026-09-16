@@ -3,6 +3,7 @@ package in.autopayguard.api.audit;
 import in.autopayguard.api.common.error.ResourceNotFoundException;
 import in.autopayguard.api.identity.CurrentUser;
 import in.autopayguard.api.identity.CurrentUserService;
+import jakarta.validation.ValidationException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -34,6 +35,9 @@ class AdminAuditEventService {
 
     @Transactional
     AdminAuditEventCollectionResponse list(Jwt jwt, UUID cursor, int limit) {
+        if (limit < 1 || limit > 100) {
+            throw new ValidationException("limit must be between 1 and 100.");
+        }
         CurrentUser reader = currentUserService.resolve(jwt);
         List<Object> arguments = new ArrayList<>();
         String cursorPredicate = "";

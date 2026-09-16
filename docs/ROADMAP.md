@@ -135,6 +135,17 @@ security ownership, and other open beta gates remain separate work.
 
 ## Private and public beta gates
 
+The September 16 request now makes the existing persistent local demo the
+default and closes new registration (ADR-022). It also authorizes a source/
+history/dependency security review and requests main-branch protection. These
+changes do not authorize public writable credentials, real users or deployment.
+
+The separately requested 2026-09-16 local login presentation update adds an
+inherited branded Keycloak theme and a password-required local demo username
+shortcut (ADR-021). It does not create a new milestone or authorize public
+shared credentials, hosting or real-user enrollment. Current evidence and
+environment limits are in `STATUS.md` and `CODEX_RESULT.md`.
+
 Private beta requires invited adults, operational ownership, guide freshness,
 and no unresolved high-risk security issue. Public beta additionally requires
 specialist Indian legal review, approved notices/terms/retention, an independent

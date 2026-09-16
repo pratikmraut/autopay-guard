@@ -16,7 +16,7 @@ frontend_lint() {
 
 all_tests() {
   require_command pnpm
-  node --test scripts/local-account-policy.test.mjs scripts/m6-restore-inventory.test.mjs
+  node --test scripts/local-account-policy.test.mjs scripts/apply-local-login-theme.test.mjs scripts/disable-local-registration.test.mjs scripts/keycloak-theme-accessibility.test.mjs scripts/m6-restore-inventory.test.mjs
   run_maven --batch-mode --no-transfer-progress verify
   pnpm test
 }
@@ -28,7 +28,7 @@ e2e() {
   export E2E_USER_PASSWORD="${KEYCLOAK_FAKE_USER_PASSWORD}"
   export AUTH_KEYCLOAK_ID="${KEYCLOAK_WEB_CLIENT_ID:-autopay-guard-web}"
   export AUTH_KEYCLOAK_SECRET="${KEYCLOAK_WEB_CLIENT_SECRET}"
-  export AUTH_SELF_REGISTRATION_ENABLED="${LOCAL_SELF_REGISTRATION_ENABLED:-true}"
+  export AUTH_SELF_REGISTRATION_ENABLED="${LOCAL_SELF_REGISTRATION_ENABLED:-false}"
   PLAYWRIGHT_TEST=true pnpm e2e
 }
 
@@ -70,7 +70,7 @@ secret_scan() {
 
 dependency_scan() {
   require_command pnpm
-  pnpm audit --prod --audit-level=high
+  pnpm audit --audit-level=moderate
 }
 
 case "${1:-}" in

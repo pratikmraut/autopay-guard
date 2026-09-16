@@ -9,7 +9,8 @@ import {
 } from "./local-account-policy.mjs";
 
 test("only exact local signup flags are accepted", () => {
-  assert.equal(localRegistrationEnabled(), true);
+  assert.equal(localRegistrationEnabled(), false);
+  assert.equal(localRegistrationEnabled("true"), true);
   assert.equal(localRegistrationEnabled("false"), false);
   for (const value of ["TRUE", "yes", "", " true ", null]) {
     assert.throws(() => localRegistrationEnabled(value));
@@ -18,11 +19,16 @@ test("only exact local signup flags are accepted", () => {
 
 test("local verification and recovery send only to the capture server", () => {
   const settings = localAccountRealmSettings(true);
+  assert.equal(settings.loginTheme, "autopay-guard");
   assert.equal(settings.registrationAllowed, true);
   assert.equal(settings.verifyEmail, true);
   assert.equal(settings.resetPasswordAllowed, true);
   assert.equal(settings.smtpServer.host, "mailpit");
   assert.deepEqual(localAccountPolicyMismatches(settings, true), []);
+  assert.deepEqual(
+    localAccountPolicyMismatches({ ...settings, loginTheme: "keycloak" }, true),
+    ["loginTheme"],
+  );
   assert.deepEqual(
     localAccountPolicyMismatches({ ...settings, verifyEmail: false }, true),
     ["verifyEmail"],
