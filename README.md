@@ -35,17 +35,42 @@ remain a separate human decision. See [`SECURITY.md`](SECURITY.md) before
 reporting a vulnerability and [`CONTRIBUTING.md`](CONTRIBUTING.md) before
 proposing a change.
 
-## Portfolio demo and private accounts
+## Use the full local demo
+
+The default is now **demo-only**: no new account registration or app enrollment.
+Open [the website](http://localhost:3000), choose **Open demo workspace**, then
+**Use local demo account**. Sign in on the branded Keycloak page with:
+
+- Username: `demo@autopayguard.local`
+- Password: your existing generated local demo password (unchanged).
+
+The operator can find the generated password in the private, ignored `.env`
+under `KEYCLOAK_FAKE_USER_PASSWORD`. If it was changed through Keycloak, use that
+current password instead; this update does not reset it to the `.env` value.
+Do not commit or publish either value. The login shortcut supplies only the
+username; password authentication is still required.
+Your demo workspace and changes persist through sign-out and ordinary restarts.
+
+The demo has normal USER features: commitments, recurrence/dashboard/calendar,
+decisions, reminders/in-app notifications, fictional cancellation guidance and
+savings, CSV import, household settings and privacy export. Staff/admin tools
+retain separate roles, and the reserved demo identity cannot delete itself.
+There are no real payments, provider cancellations or bank connections. Use
+invented data only; this local account is not a safe public shared account.
+
+### Optional no-login sample
 
 Open `/demo` for a no-login, browser-memory-only sample workspace. Add, edit,
 archive, search, and reset fictional monthly INR commitments; each tab is
 independent and a refresh restores the sample. It never calls the private API
 or saves financial data. This limited demo is separate from the full app.
 
-The local stack also supports `/signup`, verified Keycloak registration,
-explicit app-account consent, private workspace onboarding, and provider-owned
-password recovery. Local messages are captured by Mailpit, not delivered to
-real inboxes. Use fictional `@autopayguard.local` identities only.
+The separate `/demo` is intentionally smaller than the authenticated app.
+`/signup` shows registration closed. Registration code remains available only
+for a separately enabled fictional test rehearsal; it is off in bootstrap,
+Compose, the app/API and the local realm by default. Existing identities and
+their data are preserved, not deleted. Password recovery remains provider-owned
+with local messages captured by Mailpit, not delivered to real inboxes.
 
 See [the account/demo runbook](docs/PORTFOLIO_ACCOUNTS_AND_DEMO.md) for steps,
 test commands, design decisions, and the separate hosting checklist. These code
@@ -74,7 +99,11 @@ scripts                 reproducible developer helpers
 
 No global Maven installation is needed; the API uses Maven Wrapper.
 
-## Local setup
+## First-time local setup
+
+The commands below initialize a fresh fictional installation. For an existing
+demo, use the start/stop instructions under **Fake sign-in** instead: `up` and
+`seed` reconcile fixture identities/credentials and are not ordinary restarts.
 
 Do not copy the public placeholder values from `.env.example`. `make bootstrap`
 creates `.env` with random local-only secrets and rejects a pre-existing file
@@ -113,11 +142,24 @@ The local services are:
 
 Use `make dev` instead of `make up` when you want API and web hot reload; it
 starts only the three infrastructure services in Compose, then launches the API
-and web on the host. `make down` stops containers. `make reset` is the explicit
+and web on the host. `make down` removes this project's containers and network
+but retains named data volumes; use `docker compose stop` for a pause that can
+be resumed with `docker compose start`. `make reset` is the explicit
 destructive command: it visibly names and removes only this Compose project's
 local database and captured-email volumes.
 
 ## Fake sign-in
+
+After initial setup, **do not seed or reset for everyday use**. Start Rancher
+Desktop/Moby, then `docker compose start` from the repository root if containers
+were stopped. To stop without removing them or their volumes, use
+`docker compose stop`. Keep the existing `.env` and volumes to keep your password
+and saved data. The website is available only while the local stack is running;
+publishing this repository does not host the website.
+
+For an existing signup-enabled installation, see the runbook's narrow
+demo-only migration. It disables registration without recreating users or
+resetting credentials.
 
 The imported development realm contains a fake adult user. Its username and
 password are supplied by local environment variables during seeding and are
@@ -141,6 +183,12 @@ seeders refuse to overwrite conflicting commitments, preferences, or rules.
 contract checks, and secret scanning available in the local environment. The
 required acceptance results and any missing prerequisites are recorded in
 [`CODEX_RESULT.md`](CODEX_RESULT.md).
+
+The current [security review](docs/security/SECURITY_REVIEW_2026-09-16.md)
+separates fixed code findings, scanner results, image-level residual findings
+and verification limits. A passing workflow or healthy container does not prove
+the absence of vulnerabilities; historical scan results are not a current
+security guarantee.
 
 Automated checks alone do not authorize deployment. Public source publication
 was separately approved, while the current product phase still permits only

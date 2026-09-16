@@ -1,4 +1,215 @@
-# Codex result - portfolio accounts and isolated demo
+# Codex result - demo-only security review
+
+Date: 2026-09-16. Scope: preserve the existing password-required fictional demo,
+close registration, review source/history/dependencies and prepare sanitized
+GitHub publication. No production hosting, real-user enrollment or real data.
+
+## Current changes
+
+- Demo-first landing/sign-in and closed signup. Existing credentials, accounts,
+  ordinary USER features and saved workspace data are preserved. Staff roles
+  remain separate; reserved demo deletion protection remains enabled.
+- Branded inherited Keycloak login, exact-local demo username hint and narrow
+  realm operators. No password in source/UI and no authentication bypass.
+- Fixed a public Auth.js session-path alias that could expose server-intended
+  token fields to an authenticated browser. Canonical method/path allowlisting
+  now denies session aliases; internal server authentication remains intact.
+- Bounded privacy-export database reads and serialization. Added paging bounds,
+  header-only bearer regressions and safer cross-process fixture locks.
+- Patched eight development dependency advisory matches; expanded audits to
+  include development dependencies and added infrastructure-image CI gates.
+- Patched five MEDIUM Java inventory matches with Jackson 2/3 and Log4j BOM
+  patch overrides. The rebuilt API JAR and runtime image use the fixed versions.
+- Updated local pins/runtime to Keycloak 26.7.3, PostgreSQL 18.6-alpine and
+  Mailpit 1.31.1. No scanner suppressions or remote alert dismissals were added.
+
+## Fresh evidence and limits
+
+- Fresh full-history Gitleaks scan: 17 fetched commits, 5.43 MB, no detected
+  secrets. Pattern-based detection is not proof that every possible secret or
+  personal datum is absent. No Git history rewriting was performed.
+- All-dependency JavaScript audit reports no known vulnerabilities. The final
+  Git-selected source scan has no dependency/secret findings and two LOW
+  Dockerfile healthcheck recommendations (Compose already defines checks).
+  Final API image scanning reports zero vulnerabilities at all severities;
+  patched web and Mailpit image scans report zero HIGH/CRITICAL findings.
+- Keycloak has three raw scanner entries: one unresolved bundled Netty finding,
+  one rejected CVE and one strong version-metadata mismatch. PostgreSQL retains
+  31 raw HIGH/CRITICAL bundled-component findings. They remain visible and the
+  new CI infrastructure gates are expected to fail until properly resolved.
+- Original main has 18 open high CodeQL alerts. Source fixes and explicit
+  architectural triage are documented; remote closure requires the new PR scan.
+  The Dependabot alert API was inaccessible (403); its alert list was not cleared.
+- Independent source review found no additional blockers in these fixes.
+  This is not an independent penetration test or a guarantee against breaches.
+- Fresh local checks passed: 347 Surefire tests, 640 Vitest tests across 72 files,
+  nine web request-gate/lock tests and 35 root operator/policy/restore tests.
+  Formatting, ESLint, TypeScript and generated-contract verification passed.
+  The 39 PostgreSQL Failsafe cases remain skipped by the Windows Testcontainers
+  availability guard; they are not fresh PostgreSQL integration passes.
+- `make check` completed with exit 0 for the demo/authentication fixes:
+  all checks above, production build, dependency audit, a 5.15 MB source secret
+  scan and 32 desktop/mobile browser cases passed. Eight browser cases were
+  intentionally skipped: six pre-existing opt-in M5/M6 real-data-path fixtures
+  and two signup cases because registration is now closed. They are not passes.
+- The final Jackson/Log4j patch overrides were added during that combined run,
+  after its Maven phase. A separate fresh Maven verify on those final versions
+  passed all 347 tests (the same 39 PostgreSQL skips), built the executable JAR
+  and passed OpenAPI drift verification. The exact rebuilt API image has zero
+  all-severity dependency matches. Post-activation demo browser retesting passed
+  all four desktop/mobile cases: branded forms, closed registration, existing
+  password-required OIDC, six blocked session aliases, profile read and sign-out.
+  The combined run is not misrepresented as a fresh
+  all-in-one check of dependencies added after its Maven phase.
+- Earlier attempts exposed an obsolete enabled-registration expectation
+  (corrected) and interrupted Vitest worker startup (clean rerun passed). No
+  test assertion or security gate was removed to obtain the final results.
+
+## Local activation and preservation
+
+- Private application/identity database backups were made before upgrades.
+  Post-upgrade counts are unchanged: eight application identities, three
+  households, 37 commitments and 11 provider identities (including local staff
+  fixtures). Only aggregate counts were inspected for preservation evidence.
+- All five services are healthy. Registration remains false and the existing
+  realm retains the `autopay-guard` theme. No seed/reconciliation, password reset
+  or account deletion was used.
+- Due to registry build-path timeouts, verified host-built `.next` application
+  assets and the Java JAR were packaged into retained Linux runtime images.
+  No Windows dependencies, `.env`, database content or credentials were copied.
+  Previous image tags were retained. This is not a clean network-backed build;
+  fresh CI must build the checked-in Dockerfiles independently.
+- Main branch protection is unchanged pending the user's requested exact-rule
+  approval after the safety review blocked the permission change. Do not claim
+  that a source commit alone resolves the GitHub warning.
+
+Detailed findings: `docs/security/SECURITY_REVIEW_2026-09-16.md`.
+The loopback-only stack, Mailpit and generated local password must not be
+exposed publicly. Sanitized source publication is not deployment approval.
+
+## Publication and remote security checks
+
+Published the initial reviewed commit `6b57b0f` to
+`codex/portfolio-accounts-demo` and opened draft PR #24. Main is unchanged;
+there is no merge or deployment. A post-commit Gitleaks scan of 18 reachable
+commits (5.61 MB) found no detected leaks.
+
+The initial PR's Maven, frontend, both clean Dockerfile builds/image scans,
+repository Trivy, Mailpit image and Gitleaks jobs passed. Thus the earlier local
+cached-runtime packaging limitation now has independent fresh CI build evidence
+for that commit. Real-OIDC remote browser testing was still running at inspection.
+
+The remote checks also exposed two follow-up test-fixture improvements:
+
+- GitGuardian matched the static fictional Basic-auth rejection fixture twice
+  (plain/basic and base64 detectors). It was never an enrolled or usable account
+  credential. The test now creates ephemeral random values, still asserting 401
+  and no identity/decoder interactions. No real credential reset or history
+  rewriting was performed; no warning was silently dismissed. All eleven
+  focused authentication tests passed after the fixture change.
+- CodeQL flagged a check/reopen pattern in the new lock test. One FileHandle now
+  supplies both metadata and content, with guaranteed close. Five focused tests,
+  scoped lint and formatting passed. This follow-up changes tests, not runtime.
+
+These fixes require fresh remote check results on the follow-up commit before
+claiming alert closure. Dependency-review CI reports that the repository's
+Dependency Graph is unavailable; that is a repository configuration gate,
+not an additional package finding. PostgreSQL/Keycloak image gates fail on the
+documented upstream findings. Main protection still requires explicit approval.
+Keep the PR draft and do not bypass failing checks to merge or host it.
+
+---
+
+# Historical result - branded local login and existing demo shortcut
+
+Date: 2026-09-16. Scope: local login presentation and password-required access
+to the existing fictional demo account, as selected by the user. No push,
+deployment, real-user enrollment, fixture seed or existing fixture credential
+reset performed. Generated signup-test identities may exercise their own
+password-recovery flow; they are not existing user accounts.
+
+## Implemented
+
+- Inherited Keycloak 26.7.0 theme with forest/cream styling, local SVG branding,
+  responsive controls and separate sample/local-account links. Upstream forms,
+  password toggles, registration, verification and recovery remain inherited.
+- Browser accessibility testing found upstream positive `tabindex` values.
+  A small same-origin script restores DOM tab order, without reading credentials
+  or modifying authentication actions. Four focused tests cover that script.
+- A server-only helper offers `demo@autopayguard.local` as `login_hint` and
+  requires `prompt=login`. Exact LOCAL mode and canonical app/issuer URLs are
+  checked at render and submission. The existing password stays private and
+  unchanged; the independent `/demo` still needs no login.
+- A guarded operator command updates only the existing realm's `loginTheme`.
+  Review found and fixed malformed-response/transport diagnostic leakage; tests
+  cover redaction, canonical endpoint checks and minimal/idempotent updates.
+- Runbook and ADR-021 explain account persistence, local-only boundaries and
+  theme activation without broad user/password/fixture reconciliation.
+
+## Fresh verification and local runtime
+
+- 585 Vitest tests across 68 files, 315 Surefire tests, four raw-request tests,
+  and 23 root script tests passed. Formatting, lint, TypeScript, generated
+  contracts and the Next.js 16.3.3 production build passed.
+- A fresh production dependency audit reported no known vulnerabilities.
+- The 39 PostgreSQL Failsafe cases were skipped by the existing Docker
+  availability guard: Rancher's Windows engine connection is unavailable.
+  These are not fresh PostgreSQL integration passes.
+- The normal image rebuild hit registry metadata timeouts. A pinned-cache
+  retry also could not obtain build packages. For this local, dependency-
+  unchanged UI update, the verified frontend build's `.next` application/static
+  output was packaged into the existing patched Linux runtime image. No Windows
+  `node_modules`, secrets or runtime configuration were copied. The previous
+  image is retained as `autopay-guard-web:pre-branded-login`; this is not a claim
+  that a clean network-backed image build or refreshed image scan passed.
+- Only Keycloak and web were recreated/restarted, using Rancher's working
+  internal WSL engine. Database and Mailpit volumes and existing identities were
+  retained. The scoped theme update was verified without seed reconciliation.
+
+- The new demo shortcut passed two real-provider browser cases across desktop
+  and mobile: correct username hint, fresh login, state/PKCE/nonce, blank password
+  before entry, normal existing-account authentication, protected profile read,
+  sign-out and subsequent 401. No business records were changed by those cases.
+- The other two new desktop/mobile cases passed branded login, invalid-login
+  error, password visibility, registration and recovery rendering, zero serious/
+  critical Axe findings, natural tab order and no horizontal overflow. A fresh
+  script probe confirmed the accessibility asset loads successfully. Provider
+  navigation polling was made resilient to local load while preserving exact
+  origin/path assertions and excluding secret query strings from diagnostics.
+  Clean desktop and mobile screenshots were visually reviewed.
+- Existing portfolio regressions passed 6/6 (no skips) in 2.7 minutes:
+  independent memory-only samples with exact add/edit/archive/reset totals;
+  verified signup/password setup; private workspaces and cross-account denial;
+  password recovery with old-password rejection and replacement-password login.
+  All four generated fictional accounts completed application privacy deletion
+  and exact Keycloak identity removal with no cleanup failures. Captured Mailpit
+  messages and expected deletion/audit evidence remain as designed by that
+  existing suite; no broader cleanup was performed.
+- Together the targeted browser runs passed 10/10 across desktop and mobile.
+  Authentication traces/videos are disabled. Only clean pre-credential page
+  screenshots are used as visual evidence; raw provider URLs, error-context
+  artifacts and credentials must not be published.
+- All five local containers are healthy; homepage, sign-in, signup, isolated
+  sample, API readiness and identity discovery respond successfully. The current
+  web image is
+  `sha256:cc3dc5b50b477944cc694ce644dcb29a9c729abebfd798c55440334ee897380d`.
+- `make check` was attempted. The first restricted run hit a compiler-resource
+  access error. The normal-access retry passed formatting/lint/types, 315
+  Surefire tests, frontend tests/contracts/build and dependency auditing, but
+  exited at the Git-aware secret step because the repository is owned by the
+  sandbox identity. Its 39 guarded PostgreSQL cases were skipped, and its
+  standard browser matrix was not reached. No full-gate pass is claimed.
+- A separate source-only Gitleaks scan used a process-scoped exact-repository
+  Git trust setting and native Windows copying. It examined 5.06 MB from 740
+  Git-selected source files and found no leaks. A preliminary zero-byte scan
+  under the excluded tools directory was rejected, not counted as evidence.
+  No global Git trust setting or machine security policy was changed.
+
+No production-readiness or independent security-assessment claim is made. Full
+PostgreSQL acceptance, a clean network-backed image build and publication/remote
+checks remain separate from this local UI verification.
+
+# Historical result - portfolio accounts and isolated demo
 
 Date: 2026-09-12. Status: local implementation, review and complete fake-data
 acceptance passed. No deployment or real-user processing.

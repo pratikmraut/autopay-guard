@@ -1,6 +1,6 @@
 import { chromium } from "@playwright/test";
-import { open, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile } from "node:fs/promises";
+import { acquireLocalRunLock } from "./local-run-lock.mjs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,7 +13,6 @@ const fixturePath = join(
   "fixtures",
   "milestone4.json",
 );
-const lockPath = join(tmpdir(), "autopay-guard-milestone4-seed.lock");
 
 const baseUrl = localBaseUrl();
 const username = requiredFakeIdentity("KEYCLOAK_FAKE_USER_USERNAME");
@@ -496,33 +495,5 @@ function validateManifest(value) {
 }
 
 async function acquireLock() {
-  const token = crypto.randomUUID();
-  let handle;
-  try {
-    handle = await open(lockPath, "wx");
-  } catch (error) {
-    if (error?.code === "EEXIST") {
-      throw new Error(
-        `Another M4 seed verifier may be running. After verifying no verifier is active, remove the stale lock at ${lockPath}.`,
-      );
-    }
-    throw error;
-  }
-  await handle.writeFile(
-    JSON.stringify({
-      token,
-      pid: process.pid,
-      startedAt: new Date().toISOString(),
-    }),
-  );
-  await handle.close();
-  return async () => {
-    const current = await readFile(lockPath, "utf8").catch(() => null);
-    if (current) {
-      const owner = JSON.parse(current);
-      if (owner.token === token) {
-        await rm(lockPath, { force: true });
-      }
-    }
-  };
+  return acquireLocalRunLock("autopay-guard-milestone4-seed.lock");
 }

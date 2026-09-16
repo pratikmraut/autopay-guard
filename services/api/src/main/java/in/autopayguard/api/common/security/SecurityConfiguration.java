@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.jwt.JwtValidationException;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration(proxyBeanMethods = false)
@@ -48,6 +49,9 @@ public class SecurityConfiguration {
             @Value("${springdoc.api-docs.enabled:true}") boolean apiDocsEnabled,
             @Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerUiEnabled)
             throws Exception {
+        // This resource server never authenticates browser cookies, form fields,
+        // query parameters, or HTTP sessions. The cookie-authenticated web BFF
+        // separately enforces same-origin checks for all unsafe HTTP methods.
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(
                         sessions ->
@@ -108,6 +112,7 @@ public class SecurityConfiguration {
                 .oauth2ResourceServer(
                         resourceServer ->
                                 resourceServer
+                                        .bearerTokenResolver(headerOnlyBearerTokenResolver())
                                         .jwt(
                                                 jwt ->
                                                         jwt.jwtAuthenticationConverter(
@@ -124,6 +129,13 @@ public class SecurityConfiguration {
                                 headers
                                         .frameOptions(frameOptions -> frameOptions.deny()));
         return http.build();
+    }
+
+    private static DefaultBearerTokenResolver headerOnlyBearerTokenResolver() {
+        DefaultBearerTokenResolver resolver = new DefaultBearerTokenResolver();
+        resolver.setAllowFormEncodedBodyParameter(false);
+        resolver.setAllowUriQueryParameter(false);
+        return resolver;
     }
 
     @Bean

@@ -11,9 +11,8 @@ import {
 } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { open, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { acquireLocalRunLock } from "../scripts/local-run-lock.mjs";
 
 export type RealIdentity =
   | "owner"
@@ -104,10 +103,6 @@ const identityEnvironment: Record<RealIdentity, [string, string]> = {
 
 const repositoryRoot = resolve(__dirname, "../../..");
 const envFile = join(repositoryRoot, ".env");
-const lockPath = join(
-  tmpdir(),
-  "autopay-guard-milestone5-live-acceptance.lock",
-);
 const m5IdempotencyRecordKeyPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:[A-Z_]{1,40}:[0-9a-f]{64}$/;
 
@@ -137,37 +132,9 @@ export function validateRealUiEnvironment(baseUrl: string) {
 }
 
 export async function acquireRealUiLock() {
-  const token = randomUUID();
-  let handle;
-  try {
-    handle = await open(lockPath, "wx");
-  } catch (error) {
-    if (hasCode(error, "EEXIST")) {
-      throw new Error(
-        `Another M5 live verifier may be running. Check it before removing the stale lock at ${lockPath}.`,
-      );
-    }
-    throw error;
-  }
-  await handle.writeFile(
-    JSON.stringify({
-      token,
-      pid: process.pid,
-      startedAt: new Date().toISOString(),
-      suite: "playwright-real-oidc",
-    }),
-  );
-  await handle.close();
-  return async () => {
-    const current = await readFile(lockPath, "utf8").catch(() => null);
-    if (!current) {
-      return;
-    }
-    const owner = JSON.parse(current) as { token?: string };
-    if (owner.token === token) {
-      await rm(lockPath, { force: true });
-    }
-  };
+  return acquireLocalRunLock("autopay-guard-milestone5-live-acceptance.lock", {
+    suite: "playwright-real-oidc",
+  });
 }
 
 export async function createRealSession(
@@ -1656,13 +1623,4 @@ function requireM5IdempotencyRecordKey(
   const [actorUserId, operation, keyHash] = value.split(":");
   requireUuid(actorUserId!, "M5 idempotency actor");
   return [actorUserId!, operation!, keyHash!];
-}
-
-function hasCode(error: unknown, code: string) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === code
-  );
 }
