@@ -35,6 +35,17 @@ remain a separate human decision. See [`SECURITY.md`](SECURITY.md) before
 reporting a vulnerability and [`CONTRIBUTING.md`](CONTRIBUTING.md) before
 proposing a change.
 
+## Video walkthrough
+
+[Watch or download the five-minute AI-narrated walkthrough](docs/media/autopay-guard-ai-narrated-walkthrough.mp4).
+
+The video explains the project, transactional outbox, worker leases, retries,
+concurrent updates and idempotency using source excerpts from commit
+`e89f1b7`. It uses a generic synthetic voice, not Pratik's recorded voice.
+This is an interview-style walkthrough with the original Akanksha/Better
+introduction and closing, not a live app recording, a new test run or a
+production-readiness claim. See [video details](docs/media/README.md).
+
 ## Use the full local demo
 
 The default is now **demo-only**: no new account registration or app enrollment.

@@ -1,6 +1,25 @@
 # Project status
 
-Last updated: 2026-09-16
+Last updated: 2026-10-23
+
+## AI-narrated walkthrough publication
+
+The user authorized publishing the existing synthetic-voice video and any
+unpublished application code. The canonical worktree was clean, and the remote
+review branch already matched `e89f1b7`; there was no additional application
+source to commit. This change adds only the selected MP4, its README links and
+publication documentation on `codex/portfolio-accounts-demo`. The user's own
+voice recordings, credentials, runtime files and unrelated artifacts remain
+excluded. Main-branch merge and deployment are not part of this request.
+
+The exact five-minute file passed a complete local decode; encoded frames from
+all 16 scenes were reviewed. The required `make check` passed formatting, lint,
+TypeScript and 35 script tests, then failed during Java compilation with
+`Fatal Error: Cannot close compiler resources`. Later stages were not reached;
+no new full-gate or backend-test pass is claimed. See `CODEX_RESULT.md` for the
+bounded verification and the existing security gates below, which remain open.
+Separate intended-source and Git-history Gitleaks scans found no leaks, and
+the seven-file publication diff passed whitespace and independent scope review.
 
 ## Current demo-only and security-review slice
 

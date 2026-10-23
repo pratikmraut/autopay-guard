@@ -1,5 +1,19 @@
 # Next task: review the security PR and approve main protection
 
+## 2026-10-23 media publication request
+
+The user authorized pushing unpublished code and the existing AI-narrated
+video, explicitly excluding their own recorded voice. The canonical application
+source already matches remote review-branch commit `e89f1b7`. The new media/docs
+change belongs on `codex/portfolio-accounts-demo` and existing draft PR #24,
+not directly on main. This does not authorize deployment, merging past failing
+checks, or changing branch protection. The local full check stopped at Java
+compilation (`Cannot close compiler resources`); investigate that separately
+before claiming a new full application gate. The earlier security work below
+remains unresolved.
+
+## Earlier demo-only security request
+
 The latest user request supersedes account-creation as the default experience:
 preserve the existing full-app local demo username/password, close signup,
 update documentation, commit sanitized code, scan committed source/history and

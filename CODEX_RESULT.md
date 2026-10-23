@@ -1,4 +1,35 @@
-# Codex result - demo-only security review
+# Codex result - AI-narrated walkthrough publication
+
+Date: 2026-10-23. Scope: publish the existing synthetic-voice video and any
+unpublished source. No application implementation, user data, credentials,
+hosting or branch-protection settings changed.
+
+- Verified the canonical worktree was clean and remote
+  `codex/portfolio-accounts-demo` already pointed to `e89f1b7`; no application
+  source changes were pending. The two existing review commits are not yet on
+  main. Existing draft PR #24 remains the review boundary.
+- Added `docs/media/autopay-guard-ai-narrated-walkthrough.mp4` and a root README
+  link, with synthetic-voice provenance, exact source snapshot, file hash,
+  chapters and scope notes in `docs/media/README.md`.
+- The selected original file uses Microsoft David Desktop synthetic speech,
+  not the user's recording. Its Akanksha/Better interview framing is retained
+  and disclosed. No personal-voice variants or raw audio are included.
+- Verified the copied MP4 is byte-identical to the selected source (8,234,178
+  bytes). Complete video/audio decoding succeeded, and all 16 encoded scenes
+  were visually reviewed. This is media QA, not application runtime evidence.
+- Required `make check`: formatting, lint, TypeScript and 35 script tests
+  passed. Maven compilation failed with `Fatal Error: Cannot close compiler
+  resources` / `An unknown compilation problem occurred`. Backend tests and
+  subsequent frontend-test, contract, build, audit and browser stages were not
+  reached. No full-gate pass is claimed; no checks were disabled.
+- Separate Gitleaks checks found no leaks in the intended publication source
+  set (13.40 MB) or 19 existing local commits. `git diff --check` passed. A
+  second read-only review confirmed only the seven intended media/docs paths
+  changed. These checks do not close existing dependency or CodeQL findings.
+- Publication is limited to the existing review branch. Main merge, CI/security
+  disposition, production operation and hosting remain separately gated.
+
+## Earlier demo-only security review
 
 Date: 2026-09-16. Scope: preserve the existing password-required fictional demo,
 close registration, review source/history/dependencies and prepare sanitized
