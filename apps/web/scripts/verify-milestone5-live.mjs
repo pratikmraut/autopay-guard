@@ -1,8 +1,7 @@
 import { chromium } from "@playwright/test";
 import { execFile as execFileCallback, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { open, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { acquireLocalRunLock } from "./local-run-lock.mjs";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -14,10 +13,6 @@ const execFile = promisify(execFileCallback);
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, "../../..");
 const envFile = join(repositoryRoot, ".env");
-const lockPath = join(
-  tmpdir(),
-  "autopay-guard-milestone5-live-acceptance.lock",
-);
 const disposableGuideId = "40000000-0000-4000-8000-000000000020";
 const disposableOidcSubject = "88888888-8888-4888-8888-888888888888";
 const deletionTombstoneHash = createHash("sha256")
@@ -3661,33 +3656,5 @@ function requiredEnvironment(name) {
 }
 
 async function acquireLock() {
-  const token = crypto.randomUUID();
-  let handle;
-  try {
-    handle = await open(lockPath, "wx");
-  } catch (error) {
-    if (error?.code === "EEXIST") {
-      throw new Error(
-        `Another M5 live verifier may be running. After checking processes, remove the stale lock at ${lockPath}.`,
-      );
-    }
-    throw error;
-  }
-  await handle.writeFile(
-    JSON.stringify({
-      token,
-      pid: process.pid,
-      startedAt: new Date().toISOString(),
-    }),
-  );
-  await handle.close();
-  return async () => {
-    const current = await readFile(lockPath, "utf8").catch(() => null);
-    if (current) {
-      const owner = JSON.parse(current);
-      if (owner.token === token) {
-        await rm(lockPath, { force: true });
-      }
-    }
-  };
+  return acquireLocalRunLock("autopay-guard-milestone5-live-acceptance.lock");
 }

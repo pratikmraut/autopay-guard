@@ -28,10 +28,10 @@ class LocalKeycloakRealmPolicyTest {
     private final JsonNode realm = readRealmFixture();
 
     @Test
-    void localRealmSupportsVerifiedFakeSignupWithoutUnsafeGrantFlows() {
+    void localRealmClosesSignupButPreservesVerifiedDemoAndSafeGrantFlows() {
         assertThat(realm.path("realm").asString()).isEqualTo("autopay-guard");
         assertThat(realm.path("enabled").asBoolean()).isTrue();
-        assertThat(realm.path("registrationAllowed").asBoolean()).isTrue();
+        assertThat(realm.path("registrationAllowed").asBoolean()).isFalse();
         assertThat(realm.path("registrationEmailAsUsername").asBoolean()).isTrue();
         assertThat(realm.path("verifyEmail").asBoolean()).isTrue();
         assertThat(realm.path("rememberMe").asBoolean()).isFalse();

@@ -1,8 +1,8 @@
 import { chromium } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, open, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { access } from "node:fs/promises";
+import { acquireLocalRunLock } from "./local-run-lock.mjs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,10 +42,6 @@ const repositoryRoot = resolve(scriptDirectory, "../../..");
 const composeFile = join(repositoryRoot, "compose.yaml");
 const dockerConfigDirectory = join(repositoryRoot, ".tools", "docker-config");
 const dockerConfigFile = join(dockerConfigDirectory, "config.json");
-const lockPath = join(
-  tmpdir(),
-  "autopay-guard-milestone3-live-acceptance.lock",
-);
 
 validateEnvironment();
 await Promise.all([
@@ -1368,34 +1364,5 @@ function requireExactEnvironment(name, expected) {
 }
 
 async function acquireLock() {
-  const token = crypto.randomUUID();
-  let handle;
-  try {
-    handle = await open(lockPath, "wx");
-  } catch (error) {
-    if (error?.code === "EEXIST") {
-      throw new Error(
-        `Another Milestone 3 live acceptance may be running. After verifying no runner is active, remove the stale lock at ${lockPath}.`,
-      );
-    }
-    throw error;
-  }
-  await handle.writeFile(
-    JSON.stringify({
-      token,
-      pid: process.pid,
-      startedAt: new Date().toISOString(),
-    }),
-  );
-  await handle.close();
-  return async () => {
-    const current = await readFile(lockPath, "utf8").catch(() => null);
-    if (!current) {
-      return;
-    }
-    const owner = JSON.parse(current);
-    if (owner.token === token) {
-      await rm(lockPath, { force: true });
-    }
-  };
+  return acquireLocalRunLock("autopay-guard-milestone3-live-acceptance.lock");
 }

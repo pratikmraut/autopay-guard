@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 import { TrustBanner } from "@/components/trust-banner";
 import { getServerEnvironment } from "@/lib/env";
+import { isLocalDemoLoginAvailable } from "@/lib/local-demo-login";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +26,11 @@ const controls = [
 ] as const;
 
 export default function HomePage() {
+  const environment = getServerEnvironment();
   const registrationEnabled =
-    getServerEnvironment().AUTH_SELF_REGISTRATION_ENABLED === "true";
+    environment.AUTH_SELF_REGISTRATION_ENABLED === "true";
+  const demoOnly =
+    isLocalDemoLoginAvailable(environment) && !registrationEnabled;
   return (
     <div className="public-page">
       <header className="public-header">
@@ -41,7 +45,7 @@ export default function HomePage() {
             </Link>
           )}
           <Link className="primary-link" href="/signin">
-            Sign in
+            {demoOnly ? "Demo sign in" : "Sign in"}
           </Link>
         </nav>
       </header>
@@ -59,22 +63,36 @@ export default function HomePage() {
               keep a clear record of every action.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link className="primary-link primary-link--large" href="/demo">
-                Try the demo
+              <Link
+                className="primary-link primary-link--large"
+                href={demoOnly ? "/signin" : "/demo"}
+              >
+                {demoOnly ? "Open demo workspace" : "Try the demo"}
                 <span aria-hidden="true">→</span>
               </Link>
               <Link
                 className="secondary-link"
-                href={registrationEnabled ? "/signup" : "/signin"}
+                href={
+                  demoOnly
+                    ? "/demo"
+                    : registrationEnabled
+                      ? "/signup"
+                      : "/signin"
+                }
               >
-                {registrationEnabled
-                  ? "Create your private account"
-                  : "Sign in to your account"}
+                {demoOnly
+                  ? "Try a temporary sample"
+                  : registrationEnabled
+                    ? "Create your private account"
+                    : "Sign in to your account"}
               </Link>
             </div>
             <p className="mt-5 text-sm leading-6 text-slate-500">
-              Demo uses fictional data in your browser tab, with no shared
-              login. For adults 18+. AutoPay Guard does not initiate payments.
+              {demoOnly
+                ? "Use the existing demo username and password to keep working in your saved local workspace. New account registration is closed. The temporary sample resets on refresh."
+                : "Demo uses fictional data in your browser tab, with no shared login."}{" "}
+              Use fictional data only. For adults 18+. AutoPay Guard does not
+              initiate payments.
             </p>
           </div>
 
@@ -129,7 +147,11 @@ export default function HomePage() {
 
       <footer className="public-footer">
         <p>
-          AutoPay Guard · Portfolio demonstration and local account rehearsal.
+          AutoPay Guard ·{" "}
+          {demoOnly
+            ? "Local demo workspace"
+            : "Portfolio demonstration and local account rehearsal"}
+          .
         </p>
         <p>Built for clarity, consent, and user control.</p>
       </footer>

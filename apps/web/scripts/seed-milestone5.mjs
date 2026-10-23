@@ -1,11 +1,8 @@
 import { chromium } from "@playwright/test";
-import { open, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { acquireLocalRunLock } from "./local-run-lock.mjs";
 
 const baseUrl = "http://localhost:3000";
 const issuer = "http://localhost:8081/realms/autopay-guard";
-const lockPath = join(tmpdir(), "autopay-guard-milestone5-seed.lock");
 const canonicalCommitmentNames = new Set([
   "M2 Fixture StreamBox Demo",
   "M2 Fixture CloudNest Demo",
@@ -660,33 +657,5 @@ function requiredEnvironment(name) {
 }
 
 async function acquireLock() {
-  const token = crypto.randomUUID();
-  let handle;
-  try {
-    handle = await open(lockPath, "wx");
-  } catch (error) {
-    if (error?.code === "EEXIST") {
-      throw new Error(
-        `Another M5 seed verifier may be running. After checking processes, remove the stale lock at ${lockPath}.`,
-      );
-    }
-    throw error;
-  }
-  await handle.writeFile(
-    JSON.stringify({
-      token,
-      pid: process.pid,
-      startedAt: new Date().toISOString(),
-    }),
-  );
-  await handle.close();
-  return async () => {
-    const current = await readFile(lockPath, "utf8").catch(() => null);
-    if (current) {
-      const owner = JSON.parse(current);
-      if (owner.token === token) {
-        await rm(lockPath, { force: true });
-      }
-    }
-  };
+  return acquireLocalRunLock("autopay-guard-milestone5-seed.lock");
 }

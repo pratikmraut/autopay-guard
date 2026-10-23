@@ -1,6 +1,6 @@
 // Only used by loopback-only local orchestration. Never import this into a
 // production deployment: Mailpit captures verification/recovery messages.
-export function localRegistrationEnabled(value = "true") {
+export function localRegistrationEnabled(value = "false") {
   if (value !== "true" && value !== "false") {
     throw new Error("LOCAL_SELF_REGISTRATION_ENABLED must be true or false.");
   }
@@ -9,6 +9,7 @@ export function localRegistrationEnabled(value = "true") {
 
 export function localAccountRealmSettings(enabled) {
   return {
+    loginTheme: "autopay-guard",
     registrationAllowed: enabled,
     registrationEmailAsUsername: true,
     verifyEmail: true,

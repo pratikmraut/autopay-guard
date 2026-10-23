@@ -1,6 +1,86 @@
 # Project status
 
-Last updated: 2026-09-12
+Last updated: 2026-10-23
+
+## AI-narrated walkthrough publication
+
+The user authorized publishing the existing synthetic-voice video and any
+unpublished application code. The canonical worktree was clean, and the remote
+review branch already matched `e89f1b7`; there was no additional application
+source to commit. This change adds only the selected MP4, its README links and
+publication documentation on `codex/portfolio-accounts-demo`. The user's own
+voice recordings, credentials, runtime files and unrelated artifacts remain
+excluded. Main-branch merge and deployment are not part of this request.
+
+The exact five-minute file passed a complete local decode; encoded frames from
+all 16 scenes were reviewed. The required `make check` passed formatting, lint,
+TypeScript and 35 script tests, then failed during Java compilation with
+`Fatal Error: Cannot close compiler resources`. Later stages were not reached;
+no new full-gate or backend-test pass is claimed. See `CODEX_RESULT.md` for the
+bounded verification and the existing security gates below, which remain open.
+Separate intended-source and Git-history Gitleaks scans found no leaks, and
+the seven-file publication diff passed whitespace and independent scope review.
+
+## Current demo-only and security-review slice
+
+The user superseded new-account work: keep the existing local demo, close
+registration, preserve credentials/data and commit sanitized source. The landing
+and sign-in pages now prioritize the persistent demo; all registration defaults
+are false. A narrow operator has closed the existing local Keycloak realm without
+reseeding or resetting any identity. Patched API/web and upgraded local identity,
+database and mail-capture services are healthy; aggregate account/workspace/item
+counts are unchanged. The combined gate passed (32 browser cases, eight explicit
+skips); final Java dependency patches separately passed 347 backend tests and
+an all-severity clean packaged-API scan. PostgreSQL integration cases remain
+skipped on this Windows engine connection. ADR-022 records the decision; historical signup evidence below
+is not the current operating mode.
+
+The requested security review found and patched a public Auth.js session-path
+alias that bypassed the browser token-response block, and unbounded pre-export
+collection/serialization memory. The full dependency audit also found eight
+development-tool advisories; patched versions now report no known advisories.
+Gitleaks found no leaks across all 17 fetched commits. Remote CodeQL has 18 open
+alerts with explicit source fixes and architectural triage; successful workflow
+status is not evidence of zero findings. PostgreSQL and Keycloak retain raw
+upstream-image findings; new CI gates intentionally expose them. See the current security-review report and CODEX_RESULT for final
+evidence and unresolved gates. No zero-risk or production-readiness claim is made.
+
+## Historical login-presentation slice, before demo-only security changes
+
+The user requested website-matching login styling and selected the existing
+local demo account for the full app. The new inherited Keycloak theme uses
+AutoPay Guard branding and preserves provider-owned authentication forms.
+A small same-origin script restores natural keyboard tab order without reading
+form values. The web sign-in shortcut provides the reserved fictional username
+and requests a fresh provider login; it never supplies a password or bypasses
+authentication. Exact LOCAL/localhost checks run both at render and submission.
+The separate memory-only `/demo` remains available.
+
+Only local Keycloak presentation and the local web image were updated. Existing
+credentials, accounts, database volumes and business records were not reseeded.
+The dedicated activation script changes only `loginTheme`, validates the mounted
+theme and canonical local configuration, and sanitizes provider diagnostics.
+See ADR-021 and `PORTFOLIO_ACCOUNTS_AND_DEMO.md`.
+
+Fresh checks include 585 frontend unit tests, 315 Surefire tests, 23 operator/
+theme/restore script tests, four raw-request tests, formatting, lint, strict
+types, contract generation and the production frontend build. The production
+dependency audit reported no known vulnerabilities. The 39 PostgreSQL Failsafe
+cases were skipped because the Windows Testcontainers engine connection was
+unavailable; they are not counted as passes. Full-gate/runtime details and
+remaining limitations are recorded in `CODEX_RESULT.md`. Prior September 12
+evidence below is historical, not a claim that this entire gate passed again.
+The existing-account shortcut passed real OIDC login/profile/logout on desktop
+and mobile, and all five local containers are healthy. The separate source-only
+Gitleaks scan examined 5.06 MB and found no leaks. The full command stopped at
+its Windows Git-ownership check; no new full-gate pass is claimed.
+The four new branded-login browser cases and six existing portfolio browser
+regressions passed (10/10 total, no skips), including registration, recovery,
+account isolation, accessibility and fictional-account cleanup. Clean desktop/
+mobile provider screenshots were visually reviewed.
+
+No source publication, hosting, real users, real email or production operation
+was performed in this slice. Private Beta remains NO-GO.
 
 ## Latest portfolio slice
 

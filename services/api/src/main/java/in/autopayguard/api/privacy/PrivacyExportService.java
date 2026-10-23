@@ -1,5 +1,6 @@
 package in.autopayguard.api.privacy;
 
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -41,36 +42,40 @@ class PrivacyExportService {
     }
 
     Artifact build(UUID subjectUserId, Instant generatedAt) {
+        ExportReader reader = new ExportReader();
         Map<String, Object> manifest = new TreeMap<>();
-        manifest.put("auditEvents", auditEvents(subjectUserId));
-        manifest.put("cancellationData", cancellationData(subjectUserId));
-        manifest.put("consentEvents", consentEvents(subjectUserId));
+        manifest.put("auditEvents", auditEvents(reader, subjectUserId));
+        manifest.put("cancellationData", cancellationData(reader, subjectUserId));
+        manifest.put("consentEvents", consentEvents(reader, subjectUserId));
         manifest.put("generatedAt", generatedAt.toString());
-        manifest.put("households", households(subjectUserId));
-        manifest.put("importJobs", importJobs(subjectUserId));
-        manifest.put("memberships", memberships(subjectUserId));
-        manifest.put("noticeAcknowledgements", noticeAcknowledgements(subjectUserId));
-        manifest.put("notificationData", notificationData(subjectUserId));
-        manifest.put("privacyRequests", privacyRequests(subjectUserId));
+        manifest.put("households", households(reader, subjectUserId));
+        manifest.put("importJobs", importJobs(reader, subjectUserId));
+        manifest.put("memberships", memberships(reader, subjectUserId));
+        manifest.put("noticeAcknowledgements", noticeAcknowledgements(reader, subjectUserId));
+        manifest.put("notificationData", notificationData(reader, subjectUserId));
+        manifest.put("privacyRequests", privacyRequests(reader, subjectUserId));
         manifest.put("schemaVersion", SCHEMA_VERSION);
-        manifest.put("subject", subject(subjectUserId));
-        manifest.put("supportGrants", supportGrants(subjectUserId));
+        manifest.put("subject", subject(reader, subjectUserId));
+        manifest.put("supportGrants", supportGrants(reader, subjectUserId));
 
-        byte[] payload;
+        BoundedExportOutput output = new BoundedExportOutput(MAX_BYTES);
         try {
-            payload = objectMapper.writeValueAsBytes(manifest);
+            objectMapper.writeValue(output, manifest);
+        } catch (ExportTooLargeException exception) {
+            throw exception;
         } catch (Exception exception) {
+            if (output.exceeded()) {
+                throw new ExportTooLargeException();
+            }
             throw new IllegalStateException("The privacy export could not be serialized.", exception);
         }
-        if (payload.length > MAX_BYTES) {
-            throw new ExportTooLargeException();
-        }
+        byte[] payload = output.toByteArray();
         return new Artifact(payload, sha256(payload));
     }
 
-    private Map<String, Object> subject(UUID userId) {
+    private Map<String, Object> subject(ExportReader reader, UUID userId) {
         Map<String, Object> subject =
-                single(
+                reader.single(
                 """
                 SELECT id, email, display_name, timezone, locale,
                        age_confirmed_at, privacy_notice_accepted_at,
@@ -79,12 +84,12 @@ class PrivacyExportService {
                 WHERE id = ? AND deleted_at IS NULL
                 """,
                 userId);
-        subject.put("invitations", invitations(userId));
+        subject.put("invitations", invitations(reader, userId));
         return subject;
     }
 
-    private List<Map<String, Object>> noticeAcknowledgements(UUID userId) {
-        return rows(
+    private List<Map<String, Object>> noticeAcknowledgements(ExportReader reader, UUID userId) {
+        return reader.rows(
                 """
                 SELECT id, notice_version, content_digest, event_type,
                        acknowledged_at, created_at
@@ -95,8 +100,8 @@ class PrivacyExportService {
                 userId);
     }
 
-    private List<Map<String, Object>> consentEvents(UUID userId) {
-        return rows(
+    private List<Map<String, Object>> consentEvents(ExportReader reader, UUID userId) {
+        return reader.rows(
                 """
                 SELECT id, purpose, purpose_version, action, occurred_at, created_at
                 FROM consent_events
@@ -106,8 +111,8 @@ class PrivacyExportService {
                 userId);
     }
 
-    private List<Map<String, Object>> memberships(UUID userId) {
-        return rows(
+    private List<Map<String, Object>> memberships(ExportReader reader, UUID userId) {
+        return reader.rows(
                 """
                 SELECT id, household_id, role, status, optimistic_version,
                        joined_at, removed_at, created_at, updated_at
@@ -118,9 +123,9 @@ class PrivacyExportService {
                 userId);
     }
 
-    private List<Map<String, Object>> households(UUID userId) {
+    private List<Map<String, Object>> households(ExportReader reader, UUID userId) {
         List<Map<String, Object>> householdRows =
-                rows(
+                reader.rows(
                         """
                         SELECT h.id, h.name, h.owner_user_id, h.default_currency,
                                h.timezone, h.created_at, h.updated_at,
@@ -141,6 +146,7 @@ class PrivacyExportService {
             boolean memberCanRead = requesterConsent && sharingGranted(ownerUserId);
             List<Map<String, Object>> commitments =
                     visibleCommitments(
+                            reader,
                             userId,
                             householdId,
                             owner || memberCanRead);
@@ -148,7 +154,7 @@ class PrivacyExportService {
             row.put(
                     "reminderRuleSets",
                     owner
-                            ? reminderRuleSets(householdId, null)
+                            ? reminderRuleSets(reader, householdId, null)
                             : List.of());
             result.add(row);
         }
@@ -156,9 +162,9 @@ class PrivacyExportService {
     }
 
     private List<Map<String, Object>> visibleCommitments(
-            UUID userId, UUID householdId, boolean sharingAllowed) {
+            ExportReader reader, UUID userId, UUID householdId, boolean sharingAllowed) {
         List<Map<String, Object>> commitments =
-                rows(
+                reader.rows(
                         """
                         SELECT id, household_id, data_owner_user_id,
                                responsible_member_id, merchant_id, display_name,
@@ -184,7 +190,7 @@ class PrivacyExportService {
             UUID commitmentId = UUID.fromString(commitment.get("id").toString());
             commitment.put(
                     "occurrences",
-                    rows(
+                    reader.rows(
                             """
                             SELECT id, scheduled_date, expected_amount_minor,
                                    amount_kind, currency, state, created_at,
@@ -198,14 +204,14 @@ class PrivacyExportService {
                     "reminderRuleSets",
                     userId.toString()
                                     .equals(commitment.get("dataOwnerUserId").toString())
-                            ? reminderRuleSets(householdId, commitmentId)
+                            ? reminderRuleSets(reader, householdId, commitmentId)
                             : List.of());
         }
         return commitments;
     }
 
-    private List<Map<String, Object>> invitations(UUID userId) {
-        return rows(
+    private List<Map<String, Object>> invitations(ExportReader reader, UUID userId) {
+        return reader.rows(
                 """
                 SELECT i.id, i.household_id,
                        CASE
@@ -235,11 +241,11 @@ class PrivacyExportService {
     }
 
     private List<Map<String, Object>> reminderRuleSets(
-            UUID householdId, UUID commitmentId) {
+            ExportReader reader, UUID householdId, UUID commitmentId) {
         List<Map<String, Object>> sets;
         if (commitmentId == null) {
             sets =
-                    rows(
+                    reader.rows(
                             """
                             SELECT id, household_id, commitment_id, scope_type,
                                    scope_reference_id, mode, activated_at,
@@ -251,7 +257,7 @@ class PrivacyExportService {
                             householdId);
         } else {
             sets =
-                    rows(
+                    reader.rows(
                             """
                             SELECT id, household_id, commitment_id, scope_type,
                                    scope_reference_id, mode, activated_at,
@@ -267,7 +273,7 @@ class PrivacyExportService {
             UUID setId = UUID.fromString(set.get("id").toString());
             set.put(
                     "rules",
-                    rows(
+                    reader.rows(
                             """
                             SELECT id, channel, offset_days, local_send_time,
                                    enabled, activated_at, created_at, updated_at
@@ -280,11 +286,11 @@ class PrivacyExportService {
         return sets;
     }
 
-    private Map<String, Object> notificationData(UUID userId) {
+    private Map<String, Object> notificationData(ExportReader reader, UUID userId) {
         Map<String, Object> result = new TreeMap<>();
         result.put(
                 "preferences",
-                optionalSingle(
+                reader.optionalSingle(
                         """
                         SELECT id, enabled, in_app_enabled, email_enabled,
                                timezone, quiet_hours_enabled, quiet_start, quiet_end,
@@ -295,7 +301,7 @@ class PrivacyExportService {
                         """,
                         userId));
         List<Map<String, Object>> notifications =
-                rows(
+                reader.rows(
                         """
                         SELECT id, household_id, commitment_id, occurrence_id,
                                reminder_rule_id, scheduled_date, channel,
@@ -309,7 +315,7 @@ class PrivacyExportService {
         for (Map<String, Object> notification : notifications) {
             UUID notificationId = UUID.fromString(notification.get("id").toString());
             Map<String, Object> delivery =
-                    optionalSingle(
+                    reader.optionalSingle(
                             """
                             SELECT id, status, attempt_count, available_at,
                                    delivered_at, suppressed_at, failure_category,
@@ -322,7 +328,7 @@ class PrivacyExportService {
                 UUID deliveryId = UUID.fromString(delivery.get("id").toString());
                 delivery.put(
                         "outbox",
-                        optionalSingle(
+                        reader.optionalSingle(
                                 """
                                 SELECT id, event_type, status, available_at,
                                        attempt_count, processed_at,
@@ -339,11 +345,11 @@ class PrivacyExportService {
         return result;
     }
 
-    private Map<String, Object> cancellationData(UUID userId) {
+    private Map<String, Object> cancellationData(ExportReader reader, UUID userId) {
         Map<String, Object> result = new TreeMap<>();
         result.put(
                 "decisions",
-                rows(
+                reader.rows(
                         """
                         SELECT id, household_id, commitment_id, occurrence_id,
                                scheduled_date, sequence_number, commitment_version,
@@ -356,7 +362,7 @@ class PrivacyExportService {
                         """,
                         userId));
         List<Map<String, Object>> attempts =
-                rows(
+                reader.rows(
                         """
                         SELECT id, household_id, commitment_id, occurrence_id,
                                decision_id, guide_id, guide_version, scheduled_date,
@@ -381,7 +387,7 @@ class PrivacyExportService {
             UUID attemptId = UUID.fromString(attempt.get("id").toString());
             attempt.put(
                     "verifications",
-                    rows(
+                    reader.rows(
                             """
                             SELECT id, from_status, to_status, verification_basis,
                                    attempt_version, created_at
@@ -392,7 +398,7 @@ class PrivacyExportService {
                             attemptId));
             attempt.put(
                     "savingsEvents",
-                    rows(
+                    reader.rows(
                             """
                             SELECT id, event_type, reversal_reason, amount_minor,
                                    currency, estimated, period_start, period_end,
@@ -406,7 +412,7 @@ class PrivacyExportService {
         result.put("attempts", attempts);
         result.put(
                 "guideFeedback",
-                rows(
+                reader.rows(
                         """
                         SELECT f.id, f.household_id, f.commitment_id, f.guide_id,
                                f.guide_version, f.outcome, f.note, f.created_at,
@@ -422,9 +428,9 @@ class PrivacyExportService {
         return result;
     }
 
-    private List<Map<String, Object>> privacyRequests(UUID userId) {
+    private List<Map<String, Object>> privacyRequests(ExportReader reader, UUID userId) {
         List<Map<String, Object>> requests =
-                rows(
+                reader.rows(
                         """
                         SELECT r.id, r.request_type, r.status, r.correction_field,
                                r.correction_value, r.optimistic_version, r.created_at,
@@ -445,7 +451,7 @@ class PrivacyExportService {
             UUID requestId = UUID.fromString(request.get("id").toString());
             request.put(
                     "events",
-                    rows(
+                    reader.rows(
                             """
                             SELECT id,
                                    NULLIF(from_status, 'NONE') AS from_status,
@@ -461,8 +467,8 @@ class PrivacyExportService {
         return requests;
     }
 
-    private List<Map<String, Object>> auditEvents(UUID userId) {
-        return rows(
+    private List<Map<String, Object>> auditEvents(ExportReader reader, UUID userId) {
+        return reader.rows(
                 """
                 SELECT id, actor_role, action, resource_type, resource_id,
                        outcome, correlation_id, occurred_at, created_at
@@ -558,8 +564,8 @@ class PrivacyExportService {
                 userId);
     }
 
-    private List<Map<String, Object>> supportGrants(UUID userId) {
-        return rows(
+    private List<Map<String, Object>> supportGrants(ExportReader reader, UUID userId) {
+        return reader.rows(
                 """
                 SELECT id, household_id, status, optimistic_version,
                        expires_at, revoked_at, created_at, updated_at
@@ -570,9 +576,9 @@ class PrivacyExportService {
                 userId);
     }
 
-    private List<Map<String, Object>> importJobs(UUID userId) {
+    private List<Map<String, Object>> importJobs(ExportReader reader, UUID userId) {
         List<Map<String, Object>> jobs =
-                rows(
+                reader.rows(
                         """
                         SELECT id, household_id, status, raw_byte_count,
                                preview_expires_at, raw_processed_at,
@@ -590,7 +596,7 @@ class PrivacyExportService {
         for (Map<String, Object> job : jobs) {
             UUID importId = UUID.fromString(job.get("id").toString());
             List<Map<String, Object>> items =
-                    rows(
+                    reader.rows(
                             """
                             SELECT id, row_number, valid, duplicate_kind, name,
                                    category, amount_minor, currency, frequency,
@@ -624,15 +630,17 @@ class PrivacyExportService {
                                             "createdCommitmentId"));
                     item.put(
                             "errorCodes",
-                            jdbcTemplate.queryForList(
+                            reader.rows(
                                     """
                                     SELECT error_code
                                     FROM commitment_import_item_errors
                                     WHERE import_item_id = ?
                                     ORDER BY sequence_number
                                     """,
-                                    String.class,
-                                    itemId));
+                                    itemId)
+                                    .stream()
+                                    .map(error -> (String) error.get("errorCode"))
+                                    .toList());
                 }
             }
             job.put("items", items);
@@ -661,24 +669,88 @@ class PrivacyExportService {
         return !actions.isEmpty() && "GRANTED".equals(actions.getFirst());
     }
 
-    private Map<String, Object> single(String sql, Object... arguments) {
-        List<Map<String, Object>> result = rows(sql, arguments);
-        if (result.size() != 1) {
-            throw new IllegalStateException("The privacy export subject scope is incomplete.");
+    // Per-request reader bounds nested collections without shared mutable state.
+    private final class ExportReader {
+        private final PrivacyExportReadBudget budget = new PrivacyExportReadBudget();
+
+        private Map<String, Object> single(String sql, Object... arguments) {
+            List<Map<String, Object>> result = rows(sql, arguments);
+            if (result.size() != 1) {
+                throw new IllegalStateException("The privacy export subject scope is incomplete.");
+            }
+            return result.getFirst();
         }
-        return result.getFirst();
+
+        private Map<String, Object> optionalSingle(String sql, Object... arguments) {
+            List<Map<String, Object>> result = rows(sql, arguments);
+            if (result.size() > 1) {
+                throw new IllegalStateException("The privacy export subject scope is ambiguous.");
+            }
+            return result.isEmpty() ? null : result.getFirst();
+        }
+
+        private List<Map<String, Object>> rows(String sql, Object... arguments) {
+            String boundedSql = budget.boundedSql(sql);
+            return jdbcTemplate.query(
+                    boundedSql,
+                    (resultSet, rowNumber) -> {
+                        // The extra sentinel row detects overflow without mapping it.
+                        budget.acceptRow(rowNumber);
+                        Map<String, Object> row = canonicalRow(resultSet, rowNumber);
+                        row.values().forEach(budget::acceptScalar);
+                        return row;
+                    },
+                    arguments);
+        }
     }
 
-    private Map<String, Object> optionalSingle(String sql, Object... arguments) {
-        List<Map<String, Object>> result = rows(sql, arguments);
-        if (result.size() > 1) {
-            throw new IllegalStateException("The privacy export subject scope is ambiguous.");
-        }
-        return result.isEmpty() ? null : result.getFirst();
-    }
+    static final class BoundedExportOutput extends OutputStream {
+        private final int limit;
+        private byte[] bytes;
+        private int count;
+        private boolean exceeded;
 
-    private List<Map<String, Object>> rows(String sql, Object... arguments) {
-        return jdbcTemplate.query(sql, PrivacyExportService::canonicalRow, arguments);
+        BoundedExportOutput(int limit) {
+            if (limit < 1) {
+                throw new IllegalArgumentException("A positive export limit is required.");
+            }
+            this.limit = limit;
+            this.bytes = new byte[Math.min(limit, 4_096)];
+        }
+
+        @Override
+        public void write(int value) {
+            reserve(1);
+            bytes[count++] = (byte) value;
+        }
+
+        @Override
+        public void write(byte[] values, int offset, int length) {
+            java.util.Objects.checkFromIndexSize(offset, length, values.length);
+            reserve(length);
+            System.arraycopy(values, offset, bytes, count, length);
+            count += length;
+        }
+
+        private void reserve(int length) {
+            if (length > limit - count) {
+                exceeded = true;
+                throw new ExportTooLargeException();
+            }
+            int required = count + length;
+            if (required > bytes.length) {
+                int capacity = Math.min(limit, Math.max(required, bytes.length * 2));
+                bytes = java.util.Arrays.copyOf(bytes, capacity);
+            }
+        }
+
+        boolean exceeded() {
+            return exceeded;
+        }
+
+        byte[] toByteArray() {
+            return java.util.Arrays.copyOf(bytes, count);
+        }
     }
 
     private static Map<String, Object> canonicalRow(ResultSet resultSet, int rowNumber)

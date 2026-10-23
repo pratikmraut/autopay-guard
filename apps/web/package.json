@@ -13,7 +13,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "node --test raw-request-gate.test.mjs && vitest run",
+    "test": "node --test raw-request-gate.test.mjs scripts/local-run-lock.test.mjs && vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test"
   },
@@ -45,6 +45,6 @@
     "prettier": "3.6.2",
     "tailwindcss": "4.1.13",
     "typescript": "5.9.2",
-    "vitest": "3.2.4"
+    "vitest": "4.1.11"
   }
 }

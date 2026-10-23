@@ -10,7 +10,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @Testcontainers(disabledWithoutDocker = true)
 class AccountEnrollmentPostgresIT extends AccountEnrollmentIntegrationTest {
     @Container
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:18.4-alpine")
+    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:18.6-alpine")
             .withDatabaseName("autopay_guard_enrollment")
             .withUsername("autopay_guard_test")
             .withPassword("fake-test-password");

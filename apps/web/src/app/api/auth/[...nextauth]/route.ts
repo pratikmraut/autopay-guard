@@ -1,10 +1,11 @@
 import { handlers } from "@/auth";
 import { getServerEnvironment } from "@/lib/env";
+import { isPublicAuthRoute } from "@/lib/public-auth-route";
 import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
   getServerEnvironment();
-  if (new URL(request.url).pathname === "/api/auth/session") {
+  if (!isPublicAuthRoute("GET", new URL(request.url).pathname)) {
     return new Response(null, {
       status: 404,
       headers: { "cache-control": "no-store" },
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   getServerEnvironment();
-  if (new URL(request.url).pathname === "/api/auth/session") {
+  if (!isPublicAuthRoute("POST", new URL(request.url).pathname)) {
     return new Response(null, {
       status: 404,
       headers: { "cache-control": "no-store" },

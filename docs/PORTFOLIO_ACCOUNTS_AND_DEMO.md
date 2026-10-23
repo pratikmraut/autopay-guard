@@ -1,19 +1,54 @@
-# Portfolio demo and local account registration
+# Portfolio demo and local account operation
 
-This increment prepares a working portfolio demonstration and a reproducible
-**fake-data-only account-creation rehearsal**. It does not deploy the website,
-open registration to real users, configure a vendor, or approve production use.
-The architecture decision is recorded in
+## Current mode: existing demo account only (2026-09-16)
+
+The user requested no new-account flow. Registration now defaults to false in
+bootstrap, Compose, development/test orchestration, API/web policy and the local
+realm. Use the existing `demo@autopayguard.local` identity and its unchanged
+private password for the persistent full USER workspace. The home page and
+sign-in page put this experience first; `/signup` displays a closed state.
+Staff roles remain separate and the reserved demo identity remains protected
+against deletion. No existing identity or business data is removed.
+
+For an already initialized local installation, edit only
+`LOCAL_SELF_REGISTRATION_ENABLED=false` in the private `.env`, then run:
+
+```powershell
+node --env-file=.env scripts/disable-local-registration.mjs
+docker compose up --detach --no-deps --build --wait --wait-timeout 180 api web
+```
+
+The narrow operator validates exact local endpoints and changes only the
+realm's `registrationAllowed` field. It does not reseed users, passwords, roles,
+SMTP, recovery or workspaces. Recreating API/web applies the matching environment
+flags and new source. Keep the existing database volume and `.env`. Do not run
+`reset`, fixture reconciliation or `seed` merely to close signup.
+
+For ordinary use after this update, `docker compose stop` and
+`docker compose start` retain the containers, data and generated credentials.
+Start at `http://localhost:3000/signin`, never a saved long authorization URL.
+See ADR-022 for the current decision. The account-creation sections below are
+historical implementation/rehearsal documentation, not instructions to open
+registration under the current authorization.
+
+The earlier portfolio increment added a working sample demonstration and a
+reproducible **fake-data-only account-creation rehearsal**. That registration
+rehearsal is now disabled; it is not part of everyday demo operation. Neither
+increment deploys the website, opens registration to real users, configures a
+vendor or approves production use. The earlier architecture is recorded in
 [ADR-020](adr/ADR-020-isolated-portfolio-demo-and-explicit-local-enrollment.md).
+The later presentation-only local login theme and password-required demo
+shortcut are recorded in
+[ADR-021](adr/ADR-021-branded-local-login-and-password-required-demo-helper.md).
 
 ## Two separate experiences
 
-| Experience         | How to open it                                      | Data and lifetime                                                                                                                                                       |
-| ------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Interactive sample | `/demo`; no login                                   | Fictional records held in React memory in that tab. Refresh or confirmed reset restores the samples. Nothing is written to an API, `localStorage`, or `sessionStorage`. |
-| Account-based app  | `/signup`, then provider verification and `/enroll` | A distinct identity and application account, with a private workspace in the local database. Signing out does not delete this account or its records.                   |
+| Experience         | How to open it                             | Data and lifetime                                                                                                                                                       |
+| ------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Interactive sample | `/demo`; no login                          | Fictional records held in React memory in that tab. Refresh or confirmed reset restores the samples. Nothing is written to an API, `localStorage`, or `sessionStorage`. |
+| Saved demo app     | `/signin`, then **Use local demo account** | Existing fictional identity and persistent private local workspace; signing out does not delete its records.                                                            |
 
-The demo is not a shared account and provides no guest API access. A visitor
+The `/demo` sample is not a shared account and provides no guest API access. A visitor
 cannot modify another visitor's sample, and sample changes cannot be transferred
 to an account. Loading the page still requires the web server and its static
 assets; “no API calls” describes the sample's data operations, not an offline
@@ -41,7 +76,42 @@ all of its hypothetical projections. The authenticated app has the broader
 recurrence and feature set documented in the main README; the sample does not
 simulate every feature or make nonworking buttons appear functional.
 
-## Account creation and recovery
+### Existing local demo account: full authenticated app
+
+The local fixture and the isolated sample are deliberately different. The
+existing `demo@autopayguard.local` identity opens the full account-based app;
+it uses the same persistent local demo workspace across sessions. Changes made
+there are not reset by refreshing and can affect a later demonstration using
+that account. Use invented data only; this is not a public shared demo account.
+All ordinary USER features remain subject to their existing workspace and
+household permissions. This does not grant staff/admin access or remove the
+reserved fixture's deletion protection.
+
+1. Open `http://localhost:3000/signin`. If already signed in as another account,
+   sign out first.
+2. Under **Local demo account**, choose **Use local demo account**.
+3. Keycloak opens a fresh login prompt with `demo@autopayguard.local` prefilled.
+   Enter the existing local demo password there, then choose **Sign In**. The
+   app never prefills, publishes or receives that password. For an unchanged
+   seeded fixture, the operator's private ignored `.env` contains its generated
+   `KEYCLOAK_FAKE_USER_PASSWORD`; do not paste that value into source,
+   documentation, recordings or issues. A previously changed password remains
+   unchanged by the presentation and demo-only updates.
+4. The regular OIDC callback returns to the app and its existing account/workspace
+   flow. Work only in the fictional demo workspace; archive any temporary test
+   items when appropriate. Signing out ends the app session but does not erase
+   local records.
+
+This helper is enabled only for exact `LOCAL` mode with the canonical localhost
+application and issuer URLs. It supplies a username hint and `prompt=login`, not
+a password or authentication bypass. It does not create an absent fixture or
+reset a forgotten password. Outside that local configuration the helper is
+unavailable. **Try sample without signing in** opens `/demo` instead: no
+credential, no private API operations, and changes reset on refresh.
+
+## Historical account-creation flow (disabled by default)
+
+The following describes the earlier enabled rehearsal, not the current runtime:
 
 1. `/signup` starts the existing Keycloak OIDC flow with its registration hint.
    The provider owns password entry, verification and recovery; the web
@@ -73,12 +143,15 @@ production identities require an operator-reviewed migration. A narrow local
 fixture compatibility path preserves the established synthetic test accounts.
 
 Auth.js keeps tokens in the existing HttpOnly OIDC/BFF session boundary; the
-browser session JSON endpoint remains disabled. No login tokens are placed in
-browser storage. Not receiving a Google or Keycloak password does **not** remove
+public browser session JSON endpoint and its path aliases are blocked by a
+canonical auth-operation allowlist. No login tokens are exposed through that
+endpoint, `localStorage` or `sessionStorage`; the HttpOnly session cookie remains
+part of the browser/server authentication flow. Not receiving a Google or
+Keycloak password does **not** remove
 the responsibility to protect identities, tokens, email addresses, commitments,
 exports, audit records and backups.
 
-## Local setup
+## First-time local setup
 
 Use only a private development machine and invented data. Start Rancher Desktop
 with its Docker-compatible **Moby** engine, or an existing compatible Docker
@@ -87,7 +160,8 @@ pnpm toolchain, GNU Make and Git Bash on Windows, as described in the README.
 The PowerShell wrapper uses the project's ignored local tools when available;
 it is not an installer for all missing prerequisites.
 
-From a PowerShell terminal in the repository root:
+For a fresh fictional installation, from a PowerShell terminal in the repository
+root (not for restarting an already initialized demo):
 
 ```powershell
 .\make.ps1 bootstrap
@@ -98,38 +172,101 @@ Bootstrap generates an ignored `.env` with local-only random secrets. Never
 commit this file or replace secrets with public placeholders. Existing local
 configuration should be retained. `up` rebuilds the services and reconciles the
 local Keycloak policy; imported realms are not updated merely by editing a JSON
-fixture.
+fixture. The policy reconciler also reconciles reserved local fixture
+credentials. Do not use `up` as a theme-only update when existing credentials
+must be preserved; use the narrow procedure below.
 
-`LOCAL_SELF_REGISTRATION_ENABLED=true` enables the local rehearsal through the
-repository's orchestration. It maps to the API's
+Only a separately approved fictional account-creation rehearsal should set
+`LOCAL_SELF_REGISTRATION_ENABLED=true`. That opt-in enables the rehearsal through
+the repository's orchestration. It maps to the API's
 `APP_IDENTITY_SELF_REGISTRATION_ENABLED` and the web's
 `AUTH_SELF_REGISTRATION_ENABLED`, and enables matching local realm registration.
-Set the local flag to `false` and rerun `up` to close new registration consistently;
-existing registered users retain USER access and captured-email recovery.
-Direct API/web configuration defaults to disabled;
-registration must remain disabled outside this explicitly authorized local
-rehearsal. Do not copy the local Compose file, Mailpit configuration, development
-profile, fake identities or generated credentials to an internet host.
+Registration defaults to `false`. Use the narrow migration above to close a
+previously enabled installation without fixture/password reconciliation;
+existing identities retain their assigned roles and captured-email recovery.
+Direct API/web configuration also defaults to disabled. Leave registration off
+for the current demo-only operation. Do not copy the local Compose file, Mailpit
+configuration, development profile, fake identities or generated credentials
+to an internet host.
 
 Open:
 
 - Website: `http://localhost:3000`
 - Isolated sample: `http://localhost:3000/demo`
-- Account creation: `http://localhost:3000/signup`
+- Closed registration information: `http://localhost:3000/signup`
 - Captured local email: `http://localhost:8025`
 
 Optional: `.\make.ps1 seed` reconciles the reserved fake users, households and
 fixtures used by the broader acceptance suite. It is a data-writing rehearsal
-operation, not a prerequisite for the isolated sample or a new user's private
-workspace. It must never run against real-user or production data.
+operation, not a prerequisite for the isolated sample or for continuing with the
+existing demo. It can reconcile fixture credentials and data and must never run
+against real-user or production data.
 
-To stop local containers while retaining their volumes:
+For an ordinary pause and resume, retain the existing containers as well as
+their volumes:
 
 ```powershell
-.\make.ps1 down
+# Pause now:
+docker compose stop
+# Resume later, after the container engine is running:
+docker compose start
 ```
 
-Do not use the destructive reset command as an ordinary restart.
+`make down` retains named volumes but removes containers and their network, so
+`docker compose start` alone cannot resume after it. Do not use the destructive
+reset command as an ordinary restart.
+
+### Apply the branded login to an existing local realm
+
+The local theme now runs on pinned Keycloak 26.7.3. It inherits the provider's
+authentication templates and adds AutoPay Guard colors, accessible controls,
+a brand mark and local sample/privacy links. No provider passwords are added
+to the frontend. The
+theme's URLs are explicitly local; do not copy it unchanged to a hosted service.
+A small same-origin accessibility script removes only inherited positive tab
+indexes after the page is ready, restoring natural keyboard order. It does not
+read form values or change authentication behavior; zero/negative tab indexes,
+provider forms, validation and password controls remain intact.
+
+For an already initialized local stack, use the following commands from the
+repository root with the configured local Docker-compatible engine and pinned
+Node available. Keep the existing `.env` and PostgreSQL volume:
+
+```powershell
+docker compose up --detach --no-deps --force-recreate --no-build --pull never --wait --wait-timeout 180 keycloak
+node --env-file=.env scripts/apply-local-login-theme.mjs
+```
+
+Recreating **only Keycloak** is necessary when adding the read-only theme mount;
+a plain restart cannot add that mount. It briefly interrupts sign-in, but does
+not recreate the database or run fixture reconciliation. Never add `--volumes`,
+run `reset`, or delete data for this appearance change. If the configured local
+engine is unavailable, recover it first rather than installing a different stack
+or initializing a replacement database.
+
+The second command validates exact local URLs/mode/project settings, verifies
+the mounted theme exists, and updates only the existing realm's `loginTheme`.
+It does not change users, passwords, roles, registration or SMTP. Do not use
+`.\make.ps1 up`, `.\make.ps1 seed` or `validate-keycloak-seed.mjs` merely to
+activate a theme: those perform broader fixture/credential reconciliation, and
+seed writes fixture data. The dedicated script intentionally avoids that path.
+
+This theme procedure does not rebuild the Next.js app. If the running web image
+predates the new **Use local demo account** helper, separately rebuild/recreate
+only that image without running fixture reconciliation:
+
+```powershell
+docker compose up --detach --no-deps --build --wait --wait-timeout 180 web
+```
+
+After the services are healthy, begin again at `http://localhost:3000/signin`
+instead of reusing an old long authorization URL. Confirm the branded provider
+page, prefilled demo email, still-required password and successful normal login.
+With registration disabled, verify that the provider has no Register link and
+`/signup` remains closed. Inspect recovery without submitting a password reset
+for the preserved demo account. A successful theme activation is not evidence
+that every authentication journey has passed. Record fresh verification
+results separately from the historical test evidence below.
 
 ## One-minute sample walkthrough
 
@@ -140,7 +277,11 @@ Do not use the destructive reset command as an ordinary restart.
 5. Open `/demo` in a second tab, make a change in the first and verify that the
    second tab stays unchanged. Refreshing the first restores its samples.
 
-## New-account rehearsal
+## Historical new-account rehearsal (not part of demo-only operation)
+
+Do not execute this account-writing procedure under the current demo-only
+request. It requires separate fictional-rehearsal approval and deliberately
+enabled matching flags. Routine demo tests use only the existing fixture.
 
 1. Choose **Create account**, then **Create account securely**.
 2. Use a made-up name and a unique fictional address, such as
@@ -173,13 +314,23 @@ Run the complete repository gate after implementation and integration:
 .\make.ps1 check
 ```
 
-The portfolio browser specifications are
-`apps/web/e2e/portfolio-demo.spec.ts` and
-`apps/web/e2e/portfolio-signup.spec.ts`. The signup specification is explicitly
+The current demo/login browser specifications are
+`apps/web/e2e/portfolio-demo.spec.ts` and `apps/web/e2e/branded-login.spec.ts`.
+The branded suite uses the existing local account, checks closed registration
+and session-path aliases, and does not create an account or reset a password.
+The historical `apps/web/e2e/portfolio-signup.spec.ts` specification is explicitly
 guarded for enabled local registration, loopback services and fictional
 identities; do not remove these guards to run it against a host. The standard
 quality helper supplies the local configuration. A skipped signup test is not
 evidence of a successful verification or password-recovery journey.
+
+Current evidence, image findings and remaining limits belong to `STATUS.md`,
+`CODEX_RESULT.md` and `security/SECURITY_REVIEW_2026-09-16.md`. The current Compose
+pins are Keycloak 26.7.3, PostgreSQL 18.6-alpine and Mailpit 1.31.1. Upgraded or
+healthy services do not by themselves imply zero vulnerabilities or production
+readiness.
+
+### Historical September 12 account-rehearsal evidence
 
 The complete post-patch local gate passed on 2026-09-12: 315 Surefire tests,
 39 real-PostgreSQL tests, 564 Vitest tests, four raw-request tests, nine script

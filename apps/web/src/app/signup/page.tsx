@@ -6,6 +6,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { TrustBanner } from "@/components/trust-banner";
 import { beginRegistration } from "@/lib/account-registration";
 import { getServerEnvironment } from "@/lib/env";
+import { isLocalDemoLoginAvailable } from "@/lib/local-demo-login";
 import { getOptionalSessionUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export const metadata: Metadata = { title: "Create account" };
 export default async function SignupPage() {
   const environment = getServerEnvironment();
   const enabled = environment.AUTH_SELF_REGISTRATION_ENABLED === "true";
+  const demoOnly = isLocalDemoLoginAvailable(environment) && !enabled;
   if (enabled && (await getOptionalSessionUser())) {
     redirect("/enroll");
   }
@@ -28,14 +30,20 @@ export default async function SignupPage() {
       </header>
       <main className="privacy-main" id="main-content">
         <div>
-          <p className="eyebrow">Your own account, your own workspace</p>
+          <p className="eyebrow">
+            {demoOnly
+              ? "Existing demo account only"
+              : "Your own account, your own workspace"}
+          </p>
           <h1>
             {enabled ? "Create your account" : "Registration is not open"}
           </h1>
           <p className="privacy-lede">
             {enabled
               ? "Create and verify your identity with our sign-in provider, then review the notice before setting up your private workspace."
-              : "You can explore the isolated demo without an account, or sign in with an existing account."}
+              : demoOnly
+                ? "New accounts are disabled for this local demo. Use the existing demo username and password to access your saved workspace and its account features."
+                : "You can explore the isolated demo without an account, or sign in with an existing account."}
           </p>
         </div>
         <TrustBanner />
@@ -73,8 +81,13 @@ export default async function SignupPage() {
           </section>
         )}
         <div className="flex flex-wrap gap-4">
+          {demoOnly && (
+            <Link className="primary-link" href="/signin">
+              Open demo workspace
+            </Link>
+          )}
           <Link className="secondary-link" href="/demo">
-            Try the demo
+            {demoOnly ? "Try a temporary sample" : "Try the demo"}
           </Link>
           <Link className="nav-text-link" href="/privacy">
             Read the privacy notice

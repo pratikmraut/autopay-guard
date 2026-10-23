@@ -7,6 +7,11 @@ import { BrandMark } from "@/components/brand-mark";
 import { TrustBanner } from "@/components/trust-banner";
 import { accountContinuationUrl } from "@/lib/account-registration";
 import { getServerEnvironment } from "@/lib/env";
+import {
+  beginLocalDemoLogin,
+  isLocalDemoLoginAvailable,
+  LOCAL_DEMO_USERNAME,
+} from "@/lib/local-demo-login";
 import { safeReturnTo } from "@/lib/safe-return-to";
 import { getOptionalSessionUser } from "@/lib/session";
 
@@ -32,6 +37,8 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const environment = getServerEnvironment();
   const registrationEnabled =
     environment.AUTH_SELF_REGISTRATION_ENABLED === "true";
+  const localDemoEnabled = isLocalDemoLoginAvailable(environment);
+  const demoOnly = localDemoEnabled && !registrationEnabled;
   const user = await getOptionalSessionUser();
 
   if (user) {
@@ -48,8 +55,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           </p>
           <h1>Clarity before the next debit.</h1>
           <p>
-            Sign in to create a private workspace for the recurring commitments
-            you choose to track.
+            {demoOnly
+              ? "Return to your saved demo workspace for recurring commitments, reminders, decisions, savings and imports. Use fictional data only."
+              : "Sign in to create a private workspace for the recurring commitments you choose to track."}
           </p>
         </div>
         <div className="signin-quote">
@@ -91,6 +99,10 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             </div>
           )}
 
+          {localDemoEnabled && (
+            <LocalDemoSignIn callbackUrl={callbackUrl} demoOnly={demoOnly} />
+          )}
+
           <form
             action={async () => {
               "use server";
@@ -129,13 +141,26 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             </Link>
           </div>
 
+          <p className="mt-5 text-center text-sm">
+            <Link
+              className="inline-flex min-h-11 items-center font-bold text-emerald-800 underline underline-offset-4"
+              href="/demo"
+            >
+              Try sample without signing in
+            </Link>
+            <span className="block text-xs leading-5 text-slate-600">
+              Isolated sample data. Changes reset on refresh.
+            </span>
+          </p>
+
           <div className="mt-8">
             <TrustBanner />
           </div>
 
           <p className="mt-7 text-center text-xs leading-5 text-slate-500">
-            By continuing, you can review the notice before creating a
-            workspace.{" "}
+            {demoOnly
+              ? "This is a local demonstration, not an open registration service."
+              : "By continuing, you can review the notice before creating a workspace."}{" "}
             <Link
               className="font-bold text-emerald-800 underline"
               href="/privacy"
@@ -146,5 +171,56 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         </div>
       </section>
     </main>
+  );
+}
+
+function LocalDemoSignIn({
+  callbackUrl,
+  demoOnly,
+}: {
+  callbackUrl: string;
+  demoOnly: boolean;
+}) {
+  return (
+    <section
+      className="mt-7 rounded-2xl border border-emerald-200 bg-emerald-50 p-5"
+      aria-labelledby="local-demo-title"
+    >
+      <p className="eyebrow">Local demo account</p>
+      <h3
+        id="local-demo-title"
+        className="mt-2 text-lg font-extrabold text-emerald-950"
+      >
+        {demoOnly ? "Your saved demo workspace" : "Explore the full local app"}
+      </h3>
+      <p className="mt-2 break-all text-sm font-bold text-emerald-950">
+        {LOCAL_DEMO_USERNAME}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-slate-700">
+        We preselect the demo email. Enter the existing local demo password on
+        the Keycloak page to continue. Your changes are saved in the local demo
+        workspace; use fictional data only.
+      </p>
+      {demoOnly && (
+        <p className="mt-3 text-sm font-bold leading-6 text-emerald-950">
+          No new account is needed. Registration is closed.
+        </p>
+      )}
+      <form
+        className="mt-4"
+        action={async () => {
+          "use server";
+          await beginLocalDemoLogin(callbackUrl);
+        }}
+      >
+        <button
+          className="flex min-h-11 w-full items-center justify-center gap-3 rounded-xl bg-emerald-950 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+          type="submit"
+        >
+          Use local demo account
+          <span aria-hidden="true">→</span>
+        </button>
+      </form>
+    </section>
   );
 }

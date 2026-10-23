@@ -52,7 +52,7 @@ class PostgresMigrationIT {
 
     @Container
     static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:18.4-alpine")
+            new PostgreSQLContainer("postgres:18.6-alpine")
                     .withDatabaseName("autopay_guard")
                     .withUsername("autopay_guard_test")
                     .withPassword("fake-test-password");
